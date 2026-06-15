@@ -1,0 +1,36 @@
+{
+  "sqltools.connections": [
+    {
+      "mysqlOptions": {
+        "authProtocol": "default",
+        "enableSsl": "Disabled"
+      },
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 3306,
+      "driver": "MySQL",
+      "username": "ecommerce_shoes_db",
+      "database": "root",
+      "name": "local",
+      "password": "123456",
+      "connectionTimeout": 30
+    },
+    {
+      "mysqlOptions": {
+        "authProtocol": "default",
+        "enableSsl": "Disabled"
+      },
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 3306,
+      "driver": "MySQL",
+      "name": "local",
+      "username": "root",
+      "password": "123456",
+      "connectionTimeout": 30,
+      "database": "ecommerce_shoes_db"
+    }
+  ]
+}
