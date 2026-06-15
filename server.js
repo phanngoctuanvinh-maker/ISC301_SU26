@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const { errorResponse } = require('./src/utils/response.util');
 const { startOtpCleanupJob } = require('./src/jobs/otp.cleanup.job');
+const { registerSwagger } = require('./src/docs/swagger');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use(cors({
 }));
 
 // 4. Mount routes
+registerSwagger(app);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', require('./src/modules/auth/auth.routes'));
 app.use('/api/profile', require('./src/modules/profile/profile.routes'));

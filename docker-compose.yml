@@ -1,0 +1,59 @@
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: "${DB_NAME:-shoes_store}"
+      MYSQL_USER: "${DB_USER:-shoes_user}"
+      MYSQL_PASSWORD: "${DB_PASS:-shoes_pass}"
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASS:-root_pass}"
+      TZ: "${TZ:-Asia/Ho_Chi_Minh}"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    environment:
+      NODE_ENV: production
+      PORT: "${PORT:-8080}"
+      CLIENT_URL: "${CLIENT_URL:-http://localhost:5173,http://localhost:3000}"
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_USER: "${DB_USER:-shoes_user}"
+      DB_PASS: "${DB_PASS:-shoes_pass}"
+      DB_NAME: "${DB_NAME:-shoes_store}"
+      MAIL_HOST: "${MAIL_HOST:-smtp.gmail.com}"
+      MAIL_PORT: "${MAIL_PORT:-587}"
+      MAIL_USER: "${MAIL_USER:-example@gmail.com}"
+      MAIL_PASS: "${MAIL_PASS:-change_me}"
+      MAIL_FROM: "${MAIL_FROM:-Shoes Store <no-reply@example.com>}"
+      JWT_SECRET: "${JWT_SECRET:-change_me_super_secret}"
+      JWT_EXPIRES_IN: "${JWT_EXPIRES_IN:-7d}"
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-}"
+    volumes:
+      - uploads_data:/app/uploads
+    healthcheck:
+      test: ["CMD", "node", "-e", "const port = process.env.PORT || 8080; require('http').get('http://127.0.0.1:' + port, () => process.exit(0)).on('error', () => process.exit(1));"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  mysql_data:
+  uploads_data:
