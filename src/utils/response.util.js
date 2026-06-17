@@ -7,10 +7,12 @@ function successResponse(res, data = null, message = null, statusCode = 200) {
 }
 
 function errorResponse(res, message = 'Đã có lỗi xảy ra', statusCode = 400, errors = null) {
+  const safeErrors = statusCode >= 500 ? null : errors;
+
   return res.status(statusCode).json({
     success: false,
     message,
-    errors
+    errors: safeErrors
   });
 }
 
