@@ -1,7 +1,17 @@
 const path = require('path');
+const fs = require('fs');
+
+function resolveSpecPath() {
+  const candidates = [
+    path.join(__dirname, '../../docs/api/openapi_spec.yaml'),
+    path.join(__dirname, '../../../docs/api/openapi_spec.yaml')
+  ];
+
+  return candidates.find(candidate => fs.existsSync(candidate)) || candidates[0];
+}
 
 function registerSwagger(app) {
-  const specPath = path.join(__dirname, '../../openapi_spec.yaml');
+  const specPath = resolveSpecPath();
 
   app.get('/swagger/openapi.yaml', (req, res) => {
     return res.sendFile(specPath);

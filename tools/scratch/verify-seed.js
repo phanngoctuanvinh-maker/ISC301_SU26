@@ -1,5 +1,5 @@
-const authService = require('../src/modules/auth/auth.service');
-const db = require('../src/config/db');
+const authService = require('../../backend/src/modules/auth/auth.service');
+const db = require('../../backend/src/config/db');
 
 async function verify() {
   console.log('--- Verifying Seeded Authentication ---');

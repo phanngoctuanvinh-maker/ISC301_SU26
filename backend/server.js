@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('./src/config/env');
 const { startOtpCleanupJob } = require('./src/jobs/otp.cleanup.job');
 const db = require('./src/config/db');
 const { seed } = require('./src/scripts/seed');

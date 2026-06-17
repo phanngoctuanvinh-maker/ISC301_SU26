@@ -1,33 +1,14 @@
 {
-  "name": "shoes-store-backend",
+  "name": "shoes-store",
   "version": "1.0.0",
-  "description": "Backend for shoe store built with Node.js, Express, and MySQL",
-  "main": "server.js",
+  "private": true,
+  "description": "Shoes Store project workspace",
   "scripts": {
-    "start": "npm run build:fe && node server.js",
-    "dev": "nodemon server.js",
-    "test": "node --test tests/*.test.js",
+    "start": "npm --prefix backend start",
+    "dev": "npm --prefix backend run dev",
+    "test": "npm --prefix backend test",
     "build:fe": "npm run build --prefix frontend",
-    "db:seed": "node src/scripts/seed.js",
-    "openapi:json": "node scripts/openapi-yaml-to-json.js"
-  },
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.6",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "google-auth-library": "^10.7.0",
-    "joi": "^17.13.1",
-    "jsonwebtoken": "^9.0.2",
-    "multer": "^2.1.1",
-    "mysql2": "^3.9.7",
-    "node-cron": "^4.3.0",
-    "nodemailer": "^9.0.1"
-  },
-  "devDependencies": {
-    "concurrently": "^10.0.3",
-    "js-yaml": "^4.2.0",
-    "nodemon": "^3.1.0"
-  },
-  "private": true
+    "db:seed": "npm --prefix backend run db:seed",
+    "openapi:json": "npm --prefix backend run openapi:json"
+  }
 }

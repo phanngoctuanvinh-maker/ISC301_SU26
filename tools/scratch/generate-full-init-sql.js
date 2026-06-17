@@ -1,4 +1,4 @@
-const db = require('../src/config/db');
+const db = require('../../backend/src/config/db');
 const fs = require('fs');
 const path = require('path');
 
@@ -66,7 +66,7 @@ async function main() {
 
     sqlOutput += `SET FOREIGN_KEY_CHECKS = 1;\n`;
 
-    const initSqlPath = path.join(__dirname, '../docker/mysql/init.sql');
+    const initSqlPath = path.join(__dirname, '../../infra/mysql/init.sql');
     fs.writeFileSync(initSqlPath, sqlOutput, 'utf8');
     console.log(`Successfully generated and wrote init.sql to: ${initSqlPath}`);
   } catch (error) {

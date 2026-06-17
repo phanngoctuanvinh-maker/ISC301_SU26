@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { errorResponse } = require('../utils/response.util');
-require('dotenv').config();
+require('../config/env');
 
 function verifyToken(req, res, next) {
   // 1. Đọc header Authorization từ request

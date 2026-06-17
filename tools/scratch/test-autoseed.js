@@ -1,4 +1,4 @@
-const db = require('../src/config/db');
+const db = require('../../backend/src/config/db');
 
 async function test() {
   try {
@@ -14,7 +14,7 @@ async function test() {
     
     console.log('Database truncated. Importing server to boot and trigger auto-seed...');
     process.env.PORT = '9090';
-    const app = require('../server.js');
+    const app = require('../../backend/server.js');
     
     // Wait for 3 seconds for the seeder to complete
     await new Promise(resolve => setTimeout(resolve, 3000));

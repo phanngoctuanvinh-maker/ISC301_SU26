@@ -1,5 +1,5 @@
 const mysql = require('mysql2/promise');
-require('dotenv').config();
+require('./env');
 
 function readEnv(env, names) {
   for (const name of names) {
