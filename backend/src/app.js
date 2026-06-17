@@ -28,9 +28,13 @@ function createApp() {
   app.use('/api/products', require('./modules/product/product.routes'));
   app.use('/api/categories', require('./modules/catalog/category.public.routes'));
   app.use('/api/brands', require('./modules/catalog/brand.public.routes'));
+  app.use('/api/cart', require('./modules/cart/cart.routes'));
+  app.use('/api/orders', require('./modules/order/order.routes'));
   app.use('/api/admin/products', require('./modules/admin/product/product.routes'));
   app.use('/api/admin/categories', require('./modules/admin/category/category.routes'));
   app.use('/api/admin/brands', require('./modules/admin/brand/brand.routes'));
+  app.use('/api/admin/inventory', require('./modules/admin/inventory/inventory.routes'));
+  app.use('/api/admin/orders', require('./modules/admin/order/order.routes'));
 
   app.use(express.static(path.join(__dirname, '..', 'public')));
 

@@ -13,7 +13,7 @@ const productController = {
 
   async create(req, res) {
     try {
-      const result = await productService.createProduct(req.body, req.file);
+      const result = await productService.createProduct(req.body, req.file, req.user.userId);
       return successResponse(res, result, 'Tạo sản phẩm thành công', 201);
     } catch (err) {
       return errorResponse(res, err.message || 'Lỗi hệ thống', err.status || 500, err.message || err);
@@ -22,8 +22,17 @@ const productController = {
 
   async update(req, res) {
     try {
-      const result = await productService.updateProduct(req.params.id, req.body, req.file);
+      const result = await productService.updateProduct(req.params.id, req.body, req.file, req.user.userId);
       return successResponse(res, result, 'Cập nhật sản phẩm thành công', 200);
+    } catch (err) {
+      return errorResponse(res, err.message || 'Lỗi hệ thống', err.status || 500, err.message || err);
+    }
+  },
+
+  async replaceVariants(req, res) {
+    try {
+      const result = await productService.replaceProductVariants(req.params.id, req.body.variants, req.user.userId);
+      return successResponse(res, result, 'Cập nhật size và tồn kho thành công', 200);
     } catch (err) {
       return errorResponse(res, err.message || 'Lỗi hệ thống', err.status || 500, err.message || err);
     }

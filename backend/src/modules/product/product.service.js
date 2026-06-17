@@ -4,6 +4,8 @@ const { getPagination, buildPagination } = require('../../utils/pagination.util'
 const sortableFields = {
   newest: 'p.created_at DESC, p.id DESC',
   popular: 'p.sold_count DESC, p.id DESC',
+  price_asc: 'p.price ASC, p.id ASC',
+  price_desc: 'p.price DESC, p.id DESC',
   name_asc: 'p.name ASC, p.id ASC',
   name_desc: 'p.name DESC, p.id DESC'
 };
@@ -18,6 +20,7 @@ function buildProductSelect() {
       p.slug,
       p.description,
       p.main_image_url,
+      p.price,
       p.gender,
       p.sport_type,
       p.is_active,
@@ -28,10 +31,12 @@ function buildProductSelect() {
       c.name AS category_name,
       c.slug AS category_slug,
       b.name AS brand_name,
-      b.logo_url AS brand_logo_url
+      b.logo_url AS brand_logo_url,
+      COALESCE(SUM(CASE WHEN pv.is_active = true THEN pv.stock_quantity ELSE 0 END), 0) AS total_stock
     FROM products p
     INNER JOIN categories c ON c.id = p.category_id
     INNER JOIN brands b ON b.id = p.brand_id
+    LEFT JOIN product_variants pv ON pv.product_id = p.id
   `;
 }
 
@@ -94,6 +99,29 @@ function buildPublicFilters(query) {
   return { where: filters.join(' AND '), values };
 }
 
+async function getProductVariants(productId) {
+  return db.query(
+    `
+      SELECT id, product_id, sku, size, stock_quantity, low_stock_threshold, is_active
+      FROM product_variants
+      WHERE product_id = ? AND is_active = true
+      ORDER BY CAST(size AS DECIMAL(4,1)) ASC, size ASC, id ASC
+    `,
+    [productId]
+  );
+}
+
+async function attachVariants(product) {
+  const variants = await getProductVariants(product.id);
+  return {
+    ...product,
+    price: Number(product.price || 0),
+    total_stock: Number(product.total_stock || 0),
+    available_sizes: variants.filter(item => Number(item.stock_quantity) > 0).map(item => item.size),
+    variants
+  };
+}
+
 async function listPublicProducts(query) {
   const { page, limit, offset } = getPagination(query);
   const { where, values } = buildPublicFilters(query);
@@ -101,7 +129,7 @@ async function listPublicProducts(query) {
 
   const countRows = await db.query(
     `
-      SELECT COUNT(*) AS total
+      SELECT COUNT(DISTINCT p.id) AS total
       FROM products p
       INNER JOIN categories c ON c.id = p.category_id
       INNER JOIN brands b ON b.id = p.brand_id
@@ -114,6 +142,7 @@ async function listPublicProducts(query) {
     `
       ${buildProductSelect()}
       WHERE ${where}
+      GROUP BY p.id, c.id, b.id
       ORDER BY ${orderBy}
       LIMIT ? OFFSET ?
     `,
@@ -122,7 +151,11 @@ async function listPublicProducts(query) {
 
   const total = countRows[0] ? countRows[0].total : 0;
   return {
-    items: products,
+    items: products.map(product => ({
+      ...product,
+      price: Number(product.price || 0),
+      total_stock: Number(product.total_stock || 0)
+    })),
     pagination: buildPagination(page, limit, total)
   };
 }
@@ -132,6 +165,7 @@ async function getPublicProductBySlug(slug) {
     `
       ${buildProductSelect()}
       WHERE p.slug = ? AND p.is_active = true AND c.is_active = true AND b.is_active = true
+      GROUP BY p.id, c.id, b.id
       LIMIT 1
     `,
     [slug]
@@ -141,10 +175,11 @@ async function getPublicProductBySlug(slug) {
     throw { status: 404, message: 'Sản phẩm không tồn tại' };
   }
 
-  return product;
+  return attachVariants(product);
 }
 
 module.exports = {
   listPublicProducts,
-  getPublicProductBySlug
+  getPublicProductBySlug,
+  getProductVariants
 };
