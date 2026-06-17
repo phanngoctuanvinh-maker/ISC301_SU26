@@ -2,6 +2,7 @@ require('./src/config/env');
 const { startOtpCleanupJob } = require('./src/jobs/otp.cleanup.job');
 const db = require('./src/config/db');
 const { seed } = require('./src/scripts/seed');
+const { migrateMvpSchema } = require('./src/scripts/migrate-mvp');
 const { createApp } = require('./src/app');
 
 const app = createApp();
@@ -9,6 +10,7 @@ const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, async () => {
   console.log(`Server is running at http://localhost:${PORT}`);
+  await migrateMvpSchema();
   await checkAndSeed();
 });
 
