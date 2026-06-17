@@ -519,6 +519,232 @@ paths:
         '200':
           description: Thay đổi trạng thái thương hiệu thành công.
 
+  # =========================================================================
+  # 5. User Addresses (Địa chỉ nhận hàng - Yêu cầu Đăng nhập)
+  # =========================================================================
+  /api/addresses:
+    get:
+      tags:
+        - Addresses
+      summary: Lấy danh sách tất cả địa chỉ của người dùng
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lấy danh sách địa chỉ thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Lấy danh sách địa chỉ thành công
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        user_id:
+                          type: integer
+                          example: 2
+                        receiver_name:
+                          type: string
+                          example: Nguyễn Văn A
+                        phone:
+                          type: string
+                          example: "0987654321"
+                        address_line:
+                          type: string
+                          example: 123 Đường ABC
+                        ward:
+                          type: string
+                          example: Phường 1
+                        district:
+                          type: string
+                          example: Quận 1
+                        city:
+                          type: string
+                          example: TP. Hồ Chí Minh
+                        is_default:
+                          type: boolean
+                          example: true
+                        created_at:
+                          type: string
+                          format: date-time
+                        updated_at:
+                          type: string
+                          format: date-time
+    post:
+      tags:
+        - Addresses
+      summary: Thêm một địa chỉ mới
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - receiver_name
+                - phone
+                - address_line
+                - district
+                - city
+              properties:
+                receiver_name:
+                  type: string
+                  example: Nguyễn Văn A
+                  minLength: 2
+                  maxLength: 100
+                phone:
+                  type: string
+                  example: "0987654321"
+                  pattern: "^0\\d{9}$"
+                address_line:
+                  type: string
+                  example: 123 Đường ABC
+                  minLength: 5
+                  maxLength: 255
+                ward:
+                  type: string
+                  example: Phường 1
+                  maxLength: 100
+                  nullable: true
+                district:
+                  type: string
+                  example: Quận 1
+                  maxLength: 100
+                city:
+                  type: string
+                  example: TP. Hồ Chí Minh
+                  maxLength: 100
+      responses:
+        '201':
+          description: Thêm địa chỉ thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Thêm địa chỉ thành công
+                  data:
+                    type: object
+
+  /api/addresses/{id}:
+    put:
+      tags:
+        - Addresses
+      summary: Cập nhật địa chỉ
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                receiver_name:
+                  type: string
+                  example: Nguyễn Văn B
+                  minLength: 2
+                  maxLength: 100
+                phone:
+                  type: string
+                  example: "0912345678"
+                  pattern: "^0\\d{9}$"
+                address_line:
+                  type: string
+                  example: 456 Đường XYZ
+                  minLength: 5
+                  maxLength: 255
+                ward:
+                  type: string
+                  example: Phường 2
+                  maxLength: 100
+                  nullable: true
+                district:
+                  type: string
+                  example: Quận 3
+                  maxLength: 100
+                city:
+                  type: string
+                  example: TP. Hồ Chí Minh
+                  maxLength: 100
+      responses:
+        '200':
+          description: Cập nhật địa chỉ thành công.
+        '400':
+          description: Yêu cầu không hợp lệ hoặc dữ liệu không hợp lệ.
+        '403':
+          description: Không có quyền sửa địa chỉ này.
+        '404':
+          description: Địa chỉ không tồn tại.
+
+    delete:
+      tags:
+        - Addresses
+      summary: Xóa địa chỉ
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Xoá địa chỉ thành công.
+        '403':
+          description: Không có quyền xóa địa chỉ này.
+        '404':
+          description: Địa chỉ không tồn tại.
+
+  /api/addresses/{id}/default:
+    put:
+      tags:
+        - Addresses
+      summary: Đặt địa chỉ làm mặc định
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Đặt địa chỉ mặc định thành công hoặc địa chỉ này đã là mặc định.
+        '403':
+          description: Không có quyền thao tác trên địa chỉ này.
+        '404':
+          description: Địa chỉ không tồn tại.
+
 components:
   securitySchemes:
     BearerAuth:
