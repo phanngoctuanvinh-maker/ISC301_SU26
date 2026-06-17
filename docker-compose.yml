@@ -22,6 +22,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    command: ["node", "server.js"]
     restart: unless-stopped
     depends_on:
       mysql:
