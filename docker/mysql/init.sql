@@ -61,6 +61,19 @@ CREATE TABLE IF NOT EXISTS products (
     ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS addresses (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  user_id       INT NOT NULL,
+  receiver_name VARCHAR(100) NOT NULL,
+  phone         VARCHAR(20) NOT NULL,
+  address_line  VARCHAR(255) NOT NULL,
+  ward          VARCHAR(100) DEFAULT NULL,
+  district      VARCHAR(100) NOT NULL,
+  city          VARCHAR(100) NOT NULL,
+  is_default    BOOLEAN DEFAULT FALSE,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 INSERT INTO users (
   full_name,
   email,

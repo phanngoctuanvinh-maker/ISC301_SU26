@@ -30,8 +30,20 @@ registerSwagger(app);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', require('./src/modules/auth/auth.routes'));
 app.use('/api/profile', require('./src/modules/profile/profile.routes'));
+app.use('/api/addresses', require('./src/modules/address/address.routes'));
 app.use('/api/admin/categories', require('./src/modules/admin/category/category.routes'));
 app.use('/api/admin/brands', require('./src/modules/admin/brand/brand.routes'));
+
+// Phục vụ các tệp tĩnh Frontend
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Trả về file index.html cho các route SPA (ngoại trừ API)
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // 5. Global error handler
 app.use((err, req, res, next) => {
