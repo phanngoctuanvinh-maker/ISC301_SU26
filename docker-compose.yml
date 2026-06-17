@@ -4,9 +4,9 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: "${DB_NAME:-shoes_store}"
-      MYSQL_USER: "${DB_USER:-shoes_user}"
-      MYSQL_PASSWORD: "${DB_PASS:-shoes_pass}"
-      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASS:-root_pass}"
+      MYSQL_USER: "${DB_USER_DOCKER:-shoes_user}"
+      MYSQL_PASSWORD: "${DB_PASS_DOCKER:-shoes_pass}"
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASS:-root_password}"
       TZ: "${TZ:-Asia/Ho_Chi_Minh}"
     volumes:
       - mysql_data:/var/lib/mysql
@@ -34,8 +34,8 @@ services:
       CLIENT_URL: "${CLIENT_URL:-http://localhost:5173,http://localhost:3000}"
       DB_HOST: mysql
       DB_PORT: "3306"
-      DB_USER: "${DB_USER:-shoes_user}"
-      DB_PASS: "${DB_PASS:-shoes_pass}"
+      DB_USER: "${DB_USER_DOCKER:-shoes_user}"
+      DB_PASS: "${DB_PASS_DOCKER:-shoes_pass}"
       DB_NAME: "${DB_NAME:-shoes_store}"
       MAIL_HOST: "${MAIL_HOST:-smtp.gmail.com}"
       MAIL_PORT: "${MAIL_PORT:-587}"

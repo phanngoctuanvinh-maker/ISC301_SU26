@@ -6,7 +6,8 @@
   "scripts": {
     "start": "npm run build:fe && node server.js",
     "dev": "nodemon server.js",
-    "build:fe": "npm run build --prefix frontend"
+    "build:fe": "npm run build --prefix frontend",
+    "db:seed": "node src/scripts/seed.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

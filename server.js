@@ -5,6 +5,8 @@ const path = require('path');
 const { errorResponse } = require('./src/utils/response.util');
 const { startOtpCleanupJob } = require('./src/jobs/otp.cleanup.job');
 const { registerSwagger } = require('./src/docs/swagger');
+const db = require('./src/config/db');
+const { seed } = require('./src/scripts/seed');
 
 const app = express();
 
@@ -56,9 +58,27 @@ app.use((err, req, res, next) => {
 
 // 6. Listen port
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server đang chạy tại http://localhost:${PORT}`);
+  // Tự động kiểm tra và seed dữ liệu nếu cơ sở dữ liệu trống
+  await checkAndSeed();
 });
+
+// Hàm kiểm tra và tự động seed dữ liệu mẫu
+async function checkAndSeed() {
+  try {
+    const userCountRes = await db.query('SELECT COUNT(*) as count FROM users');
+    const userCount = userCountRes[0].count;
+    if (userCount <= 1) {
+      console.log('[Auto-Seed] Cơ sở dữ liệu trống hoặc chỉ có admin mặc định. Bắt đầu tự động nạp dữ liệu mẫu...');
+      await seed();
+    } else {
+      console.log(`[Auto-Seed] Phát hiện ${userCount} người dùng trong DB. Bỏ qua tự động nạp dữ liệu.`);
+    }
+  } catch (err) {
+    console.error('[Auto-Seed Error]: Lỗi khi kiểm tra hoặc tự động nạp dữ liệu:', err.message);
+  }
+}
 
 // 7. Khởi động cron job dọn dẹp OTP hết hạn
 startOtpCleanupJob();
