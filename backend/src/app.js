@@ -44,7 +44,7 @@ function createApp() {
   app.use((err, req, res, next) => {
     console.error('[Global Error Handler]:', err);
     const statusCode = err.status || 500;
-    const message = err.message || 'Loi he thong';
+    const message = err.message || 'Lỗi hệ thống';
     const errors = err.errors || null;
     return errorResponse(res, message, statusCode, errors);
   });

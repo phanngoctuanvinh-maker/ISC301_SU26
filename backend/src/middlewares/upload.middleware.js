@@ -29,7 +29,7 @@ const fileFilter = (req, file, cb) => {
   if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Chỉ cho phép upload file ảnh JPG, PNG hoặc WEBP'), false);
+    cb(new Error('Chỉ cho phép tải lên tệp ảnh JPG, PNG hoặc WEBP'), false);
   }
 };
 

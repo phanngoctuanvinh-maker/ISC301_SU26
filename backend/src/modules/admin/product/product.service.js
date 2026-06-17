@@ -17,14 +17,14 @@ function normalizeNullableString(value) {
 async function ensureCategoryExists(categoryId) {
   const category = await db.queryOne('SELECT id FROM categories WHERE id = ?', [categoryId]);
   if (!category) {
-    throw { status: 404, message: 'Danh muc khong ton tai' };
+    throw { status: 404, message: 'Danh mục không tồn tại' };
   }
 }
 
 async function ensureBrandExists(brandId) {
   const brand = await db.queryOne('SELECT id FROM brands WHERE id = ?', [brandId]);
   if (!brand) {
-    throw { status: 404, message: 'Thuong hieu khong ton tai' };
+    throw { status: 404, message: 'Thương hiệu không tồn tại' };
   }
 }
 
@@ -63,7 +63,7 @@ async function getProductById(id) {
   );
 
   if (!product) {
-    throw { status: 404, message: 'San pham khong ton tai' };
+    throw { status: 404, message: 'Sản phẩm không tồn tại' };
   }
 
   return product;
@@ -205,7 +205,7 @@ async function updateProduct(id, body, file) {
   }
 
   if (fields.length === 0) {
-    throw { status: 400, message: 'Vui long cung cap thong tin can cap nhat' };
+    throw { status: 400, message: 'Vui lòng cung cấp thông tin cần cập nhật' };
   }
 
   values.push(id);

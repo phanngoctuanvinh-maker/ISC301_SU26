@@ -138,7 +138,7 @@ async function getPublicProductBySlug(slug) {
   );
 
   if (!product) {
-    throw { status: 404, message: 'San pham khong ton tai' };
+    throw { status: 404, message: 'Sản phẩm không tồn tại' };
   }
 
   return product;

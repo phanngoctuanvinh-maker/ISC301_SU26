@@ -103,7 +103,7 @@ const profileService = {
   async updateAvatar(userId, file) {
     // 1. Kiểm tra xem có file tải lên không
     if (!file) {
-      throw { status: 400, message: 'Vui lòng chọn ảnh để upload' };
+      throw { status: 400, message: 'Vui lòng chọn ảnh để tải lên' };
     }
 
     // 2. Lấy thông tin avatar cũ để xóa

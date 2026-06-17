@@ -5,9 +5,9 @@ const brandPublicController = {
   async getAll(req, res) {
     try {
       const result = await brandService.getActiveBrands();
-      return successResponse(res, result, 'Lay danh sach thuong hieu thanh cong', 200);
+      return successResponse(res, result, 'Lấy danh sách thương hiệu thành công', 200);
     } catch (err) {
-      return errorResponse(res, 'Loi he thong', 500, err.message || err);
+      return errorResponse(res, 'Lỗi hệ thống', 500, err.message || err);
     }
   }
 };

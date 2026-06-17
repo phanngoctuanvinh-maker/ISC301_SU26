@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Shoes Store API Specification",
-    "description": "Tài liệu mô tả toàn bộ API của dự án bán giày (Node.js + Express.js + MySQL).",
+    "description": "Complete OpenAPI specification for the Shoes Store backend built with Node.js, Express, and MySQL.",
     "version": "1.0.0"
   },
   "servers": [
@@ -17,8 +17,8 @@
         "tags": [
           "Authentication"
         ],
-        "summary": "Đăng ký tài khoản mới",
-        "description": "Tạo tài khoản mới, sau khi tạo sẽ tự động gửi mã OTP 6 số về email.",
+        "summary": "Register a new account",
+        "description": "Creates a pending user registration and sends a six-digit OTP to the email address.",
         "requestBody": {
           "required": true,
           "content": {
@@ -33,7 +33,7 @@
                 "properties": {
                   "full_name": {
                     "type": "string",
-                    "example": "Nguyễn Văn A",
+                    "example": "example",
                     "minLength": 2,
                     "maxLength": 100
                   },
@@ -45,7 +45,7 @@
                   "password": {
                     "type": "string",
                     "example": "Password123",
-                    "description": "Phải chứa ít nhất 8 ký tự, 1 chữ hoa, 1 chữ thường và 1 số."
+                    "description": "See schema constraints."
                   },
                   "phone": {
                     "type": "string",
@@ -59,10 +59,10 @@
         },
         "responses": {
           "201": {
-            "description": "Đăng ký thành công, vui lòng kiểm tra OTP trong email."
+            "description": "Resource created successfully."
           },
           "400": {
-            "description": "Validate dữ liệu thất bại hoặc email đã tồn tại."
+            "description": "Invalid request data."
           }
         }
       }
@@ -72,8 +72,8 @@
         "tags": [
           "Authentication"
         ],
-        "summary": "Xác minh mã OTP",
-        "description": "Xác minh tài khoản bằng mã OTP 6 số được gửi qua email.",
+        "summary": "Verify OTP",
+        "description": "Verifies a pending registration with the OTP sent by email and creates the user account.",
         "requestBody": {
           "required": true,
           "content": {
@@ -101,10 +101,10 @@
         },
         "responses": {
           "200": {
-            "description": "Xác minh tài khoản thành công."
+            "description": "Request completed successfully."
           },
           "400": {
-            "description": "OTP không chính xác hoặc đã hết hạn."
+            "description": "Invalid request data."
           }
         }
       }
@@ -114,8 +114,8 @@
         "tags": [
           "Authentication"
         ],
-        "summary": "Gửi lại mã OTP",
-        "description": "Yêu cầu gửi lại mã OTP mới đến email nếu mã cũ hết hạn.",
+        "summary": "Resend OTP",
+        "description": "Generates and sends a new OTP for a pending registration.",
         "requestBody": {
           "required": true,
           "content": {
@@ -138,10 +138,10 @@
         },
         "responses": {
           "200": {
-            "description": "Đã gửi lại OTP mới thành công."
+            "description": "Request completed successfully."
           },
           "400": {
-            "description": "Email chưa đăng ký hoặc có lỗi xảy ra."
+            "description": "Invalid request data."
           }
         }
       }
@@ -151,8 +151,8 @@
         "tags": [
           "Authentication"
         ],
-        "summary": "Đăng nhập bằng email & password",
-        "description": "Kiểm tra thông tin đăng nhập và trả về mã JWT Token cùng thông tin user.",
+        "summary": "Log in with email and password",
+        "description": "Authenticates a user with email and password and returns a JWT.",
         "requestBody": {
           "required": true,
           "content": {
@@ -180,7 +180,7 @@
         },
         "responses": {
           "200": {
-            "description": "Đăng nhập thành công, trả về token.",
+            "description": "Request completed successfully.",
             "content": {
               "application/json": {
                 "schema": {
@@ -192,7 +192,7 @@
                     },
                     "message": {
                       "type": "string",
-                      "example": "Đăng nhập thành công"
+                      "example": "example"
                     },
                     "data": {
                       "type": "object",
@@ -230,7 +230,7 @@
             }
           },
           "401": {
-            "description": "Sai mật khẩu hoặc tài khoản chưa kích hoạt."
+            "description": "Authentication is required or invalid."
           }
         }
       }
@@ -240,8 +240,8 @@
         "tags": [
           "Authentication"
         ],
-        "summary": "Đăng nhập bằng tài khoản Google",
-        "description": "Xác thực ID Token từ Google Client (OAuth2) và trả về JWT Token.",
+        "summary": "Log in with Google",
+        "description": "Authenticates or links a user with a Google ID token and returns a JWT.",
         "requestBody": {
           "required": true,
           "content": {
@@ -263,7 +263,7 @@
         },
         "responses": {
           "200": {
-            "description": "Đăng nhập Google thành công."
+            "description": "Request completed successfully."
           }
         }
       }
@@ -273,7 +273,7 @@
         "tags": [
           "Profile"
         ],
-        "summary": "Lấy thông tin cá nhân hiện tại",
+        "summary": "Get current profile",
         "security": [
           {
             "BearerAuth": []
@@ -281,15 +281,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Lấy thông tin thành công."
+            "description": "Request completed successfully."
           }
-        }
+        },
+        "description": "Returns the authenticated user profile."
       },
       "put": {
         "tags": [
           "Profile"
         ],
-        "summary": "Cập nhật thông tin cá nhân",
+        "summary": "Update current profile",
         "security": [
           {
             "BearerAuth": []
@@ -304,7 +305,7 @@
                 "properties": {
                   "full_name": {
                     "type": "string",
-                    "example": "Nguyễn Văn B"
+                    "example": "example"
                   },
                   "phone": {
                     "type": "string",
@@ -312,7 +313,7 @@
                   },
                   "address": {
                     "type": "string",
-                    "example": "123 Đường ABC, Quận 1, TP. HCM"
+                    "example": "example"
                   },
                   "gender": {
                     "type": "string",
@@ -335,9 +336,10 @@
         },
         "responses": {
           "200": {
-            "description": "Cập nhật thành công."
+            "description": "Request completed successfully."
           }
-        }
+        },
+        "description": "Updates profile fields for the authenticated user."
       }
     },
     "/api/profile/change-password": {
@@ -345,7 +347,7 @@
         "tags": [
           "Profile"
         ],
-        "summary": "Đổi mật khẩu",
+        "summary": "Change password",
         "security": [
           {
             "BearerAuth": []
@@ -377,12 +379,13 @@
         },
         "responses": {
           "200": {
-            "description": "Đổi mật khẩu thành công."
+            "description": "Request completed successfully."
           },
           "400": {
-            "description": "Mật khẩu cũ không đúng hoặc mật khẩu mới trùng mật khẩu cũ."
+            "description": "Invalid request data."
           }
-        }
+        },
+        "description": "Changes the authenticated user password after validating the current password."
       }
     },
     "/api/profile/avatar": {
@@ -390,7 +393,7 @@
         "tags": [
           "Profile"
         ],
-        "summary": "Cập nhật ảnh đại diện (Avatar)",
+        "summary": "Update avatar",
         "security": [
           {
             "BearerAuth": []
@@ -409,7 +412,7 @@
                   "avatar": {
                     "type": "string",
                     "format": "binary",
-                    "description": "File ảnh đại diện (JPG, PNG, WEBP tối đa 2MB)."
+                    "description": "See schema constraints."
                   }
                 }
               }
@@ -418,9 +421,10 @@
         },
         "responses": {
           "200": {
-            "description": "Cập nhật ảnh đại diện thành công."
+            "description": "Request completed successfully."
           }
-        }
+        },
+        "description": "Uploads and stores a new avatar for the authenticated user."
       }
     },
     "/api/admin/categories": {
@@ -428,7 +432,7 @@
         "tags": [
           "Admin Category"
         ],
-        "summary": "Lấy cây danh mục 2 tầng (Cha -> Con)",
+        "summary": "List admin categories",
         "security": [
           {
             "BearerAuth": []
@@ -436,15 +440,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Lấy danh sách thành công."
+            "description": "Request completed successfully."
           }
-        }
+        },
+        "description": "Returns the category tree for admin management."
       },
       "post": {
         "tags": [
           "Admin Category"
         ],
-        "summary": "Tạo danh mục mới",
+        "summary": "Create category",
         "security": [
           {
             "BearerAuth": []
@@ -462,22 +467,22 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "example": "Giày Nike Nam"
+                    "example": "example"
                   },
                   "parent_id": {
                     "type": "string",
                     "example": "1",
-                    "description": "Trỏ tới ID danh mục cha. Trống hoặc \"null\" nếu là danh mục cha."
+                    "description": "See schema constraints."
                   },
                   "sort_order": {
                     "type": "string",
                     "example": "1",
-                    "description": "Thứ tự hiển thị."
+                    "description": "See schema constraints."
                   },
                   "image": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Ảnh danh mục (JPG, PNG, WEBP tối đa 2MB)."
+                    "description": "See schema constraints."
                   }
                 }
               }
@@ -486,9 +491,10 @@
         },
         "responses": {
           "201": {
-            "description": "Tạo danh mục thành công."
+            "description": "Resource created successfully."
           }
-        }
+        },
+        "description": "Creates a new category or child category."
       }
     },
     "/api/admin/categories/{id}": {
@@ -496,7 +502,7 @@
         "tags": [
           "Admin Category"
         ],
-        "summary": "Cập nhật danh mục",
+        "summary": "Update category",
         "security": [
           {
             "BearerAuth": []
@@ -522,7 +528,7 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "example": "Giày Nike Nam Cận Cao Cấp"
+                    "example": "example"
                   },
                   "parent_id": {
                     "type": "string",
@@ -535,7 +541,7 @@
                   "image": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Ảnh mới cần cập nhật."
+                    "description": "See schema constraints."
                   }
                 }
               }
@@ -544,9 +550,10 @@
         },
         "responses": {
           "200": {
-            "description": "Cập nhật thành công."
+            "description": "Request completed successfully."
           }
-        }
+        },
+        "description": "Updates a category by ID."
       }
     },
     "/api/admin/categories/{id}/toggle-status": {
@@ -554,7 +561,7 @@
         "tags": [
           "Admin Category"
         ],
-        "summary": "Ẩn/Hiện danh mục (Toggle is_active)",
+        "summary": "Toggle category status",
         "security": [
           {
             "BearerAuth": []
@@ -573,9 +580,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Thay đổi trạng thái thành công. Ẩn cha sẽ tự ẩn con."
+            "description": "Request completed successfully."
           }
-        }
+        },
+        "description": "Toggles a category active status."
       }
     },
     "/api/admin/categories/reorder": {
@@ -583,7 +591,7 @@
         "tags": [
           "Admin Category"
         ],
-        "summary": "Sắp xếp lại danh mục",
+        "summary": "Reorder categories",
         "security": [
           {
             "BearerAuth": []
@@ -626,9 +634,10 @@
         },
         "responses": {
           "200": {
-            "description": "Sắp xếp lại thành công."
+            "description": "Request completed successfully."
           }
-        }
+        },
+        "description": "Updates category sort order in bulk."
       }
     },
     "/api/admin/brands": {
@@ -636,7 +645,7 @@
         "tags": [
           "Admin Brand"
         ],
-        "summary": "Lấy toàn bộ thương hiệu kèm số sản phẩm",
+        "summary": "List admin brands",
         "security": [
           {
             "BearerAuth": []
@@ -644,15 +653,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Lấy danh sách thành công."
+            "description": "Request completed successfully."
           }
-        }
+        },
+        "description": "Returns all brands for admin management."
       },
       "post": {
         "tags": [
           "Admin Brand"
         ],
-        "summary": "Tạo thương hiệu mới",
+        "summary": "Create brand",
         "security": [
           {
             "BearerAuth": []
@@ -674,12 +684,12 @@
                   },
                   "description": {
                     "type": "string",
-                    "example": "Thương hiệu thể thao nổi tiếng của Mỹ."
+                    "example": "example"
                   },
                   "logo": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Ảnh Logo thương hiệu (tối đa 2MB)."
+                    "description": "See schema constraints."
                   }
                 }
               }
@@ -688,9 +698,10 @@
         },
         "responses": {
           "201": {
-            "description": "Tạo thương hiệu thành công."
+            "description": "Resource created successfully."
           }
-        }
+        },
+        "description": "Creates a new brand."
       }
     },
     "/api/admin/brands/{id}": {
@@ -698,7 +709,7 @@
         "tags": [
           "Admin Brand"
         ],
-        "summary": "Cập nhật thương hiệu",
+        "summary": "Update brand",
         "security": [
           {
             "BearerAuth": []
@@ -728,12 +739,12 @@
                   },
                   "description": {
                     "type": "string",
-                    "example": "Mô tả mới cập nhật."
+                    "example": "example"
                   },
                   "logo": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Ảnh Logo mới cập nhật."
+                    "description": "See schema constraints."
                   }
                 }
               }
@@ -742,9 +753,10 @@
         },
         "responses": {
           "200": {
-            "description": "Cập nhật thành công."
+            "description": "Request completed successfully."
           }
-        }
+        },
+        "description": "Updates a brand by ID."
       }
     },
     "/api/admin/brands/{id}/toggle-status": {
@@ -752,7 +764,7 @@
         "tags": [
           "Admin Brand"
         ],
-        "summary": "Ẩn/Hiện thương hiệu",
+        "summary": "Toggle brand status",
         "security": [
           {
             "BearerAuth": []
@@ -771,9 +783,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Thay đổi trạng thái thương hiệu thành công."
+            "description": "Request completed successfully."
           }
-        }
+        },
+        "description": "Toggles a brand active status."
       }
     },
     "/api/addresses": {
@@ -781,7 +794,7 @@
         "tags": [
           "Addresses"
         ],
-        "summary": "Lấy danh sách tất cả địa chỉ của người dùng",
+        "summary": "List addresses",
         "security": [
           {
             "BearerAuth": []
@@ -789,7 +802,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Lấy danh sách địa chỉ thành công.",
+            "description": "Request completed successfully.",
             "content": {
               "application/json": {
                 "schema": {
@@ -801,7 +814,7 @@
                     },
                     "message": {
                       "type": "string",
-                      "example": "Lấy danh sách địa chỉ thành công"
+                      "example": "example"
                     },
                     "data": {
                       "type": "array",
@@ -818,7 +831,7 @@
                           },
                           "receiver_name": {
                             "type": "string",
-                            "example": "Nguyễn Văn A"
+                            "example": "example"
                           },
                           "phone": {
                             "type": "string",
@@ -826,19 +839,19 @@
                           },
                           "address_line": {
                             "type": "string",
-                            "example": "123 Đường ABC"
+                            "example": "example"
                           },
                           "ward": {
                             "type": "string",
-                            "example": "Phường 1"
+                            "example": "example"
                           },
                           "district": {
                             "type": "string",
-                            "example": "Quận 1"
+                            "example": "example"
                           },
                           "city": {
                             "type": "string",
-                            "example": "TP. Hồ Chí Minh"
+                            "example": "example"
                           },
                           "is_default": {
                             "type": "boolean",
@@ -860,13 +873,14 @@
               }
             }
           }
-        }
+        },
+        "description": "Returns shipping addresses for the authenticated user."
       },
       "post": {
         "tags": [
           "Addresses"
         ],
-        "summary": "Thêm một địa chỉ mới",
+        "summary": "Create address",
         "security": [
           {
             "BearerAuth": []
@@ -888,7 +902,7 @@
                 "properties": {
                   "receiver_name": {
                     "type": "string",
-                    "example": "Nguyễn Văn A",
+                    "example": "example",
                     "minLength": 2,
                     "maxLength": 100
                   },
@@ -899,24 +913,24 @@
                   },
                   "address_line": {
                     "type": "string",
-                    "example": "123 Đường ABC",
+                    "example": "example",
                     "minLength": 5,
                     "maxLength": 255
                   },
                   "ward": {
                     "type": "string",
-                    "example": "Phường 1",
+                    "example": "example",
                     "maxLength": 100,
                     "nullable": true
                   },
                   "district": {
                     "type": "string",
-                    "example": "Quận 1",
+                    "example": "example",
                     "maxLength": 100
                   },
                   "city": {
                     "type": "string",
-                    "example": "TP. Hồ Chí Minh",
+                    "example": "example",
                     "maxLength": 100
                   }
                 }
@@ -926,7 +940,7 @@
         },
         "responses": {
           "201": {
-            "description": "Thêm địa chỉ thành công.",
+            "description": "Resource created successfully.",
             "content": {
               "application/json": {
                 "schema": {
@@ -938,7 +952,7 @@
                     },
                     "message": {
                       "type": "string",
-                      "example": "Thêm địa chỉ thành công"
+                      "example": "example"
                     },
                     "data": {
                       "type": "object"
@@ -948,7 +962,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Creates a new shipping address for the authenticated user."
       }
     },
     "/api/addresses/{id}": {
@@ -956,7 +971,7 @@
         "tags": [
           "Addresses"
         ],
-        "summary": "Cập nhật địa chỉ",
+        "summary": "Update address",
         "security": [
           {
             "BearerAuth": []
@@ -982,7 +997,7 @@
                 "properties": {
                   "receiver_name": {
                     "type": "string",
-                    "example": "Nguyễn Văn B",
+                    "example": "example",
                     "minLength": 2,
                     "maxLength": 100
                   },
@@ -993,24 +1008,24 @@
                   },
                   "address_line": {
                     "type": "string",
-                    "example": "456 Đường XYZ",
+                    "example": "example",
                     "minLength": 5,
                     "maxLength": 255
                   },
                   "ward": {
                     "type": "string",
-                    "example": "Phường 2",
+                    "example": "example",
                     "maxLength": 100,
                     "nullable": true
                   },
                   "district": {
                     "type": "string",
-                    "example": "Quận 3",
+                    "example": "example",
                     "maxLength": 100
                   },
                   "city": {
                     "type": "string",
-                    "example": "TP. Hồ Chí Minh",
+                    "example": "example",
                     "maxLength": 100
                   }
                 }
@@ -1020,24 +1035,25 @@
         },
         "responses": {
           "200": {
-            "description": "Cập nhật địa chỉ thành công."
+            "description": "Request completed successfully."
           },
           "400": {
-            "description": "Yêu cầu không hợp lệ hoặc dữ liệu không hợp lệ."
+            "description": "Invalid request data."
           },
           "403": {
-            "description": "Không có quyền sửa địa chỉ này."
+            "description": "The authenticated user is not allowed to access this resource."
           },
           "404": {
-            "description": "Địa chỉ không tồn tại."
+            "description": "The requested resource was not found."
           }
-        }
+        },
+        "description": "Updates one shipping address owned by the authenticated user."
       },
       "delete": {
         "tags": [
           "Addresses"
         ],
-        "summary": "Xóa địa chỉ",
+        "summary": "Delete address",
         "security": [
           {
             "BearerAuth": []
@@ -1056,15 +1072,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Xoá địa chỉ thành công."
+            "description": "Request completed successfully."
           },
           "403": {
-            "description": "Không có quyền xóa địa chỉ này."
+            "description": "The authenticated user is not allowed to access this resource."
           },
           "404": {
-            "description": "Địa chỉ không tồn tại."
+            "description": "The requested resource was not found."
           }
-        }
+        },
+        "description": "Deletes one shipping address owned by the authenticated user."
       }
     },
     "/api/addresses/{id}/default": {
@@ -1072,7 +1089,7 @@
         "tags": [
           "Addresses"
         ],
-        "summary": "Đặt địa chỉ làm mặc định",
+        "summary": "Set default address",
         "security": [
           {
             "BearerAuth": []
@@ -1091,15 +1108,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Đặt địa chỉ mặc định thành công hoặc địa chỉ này đã là mặc định."
+            "description": "Request completed successfully."
           },
           "403": {
-            "description": "Không có quyền thao tác trên địa chỉ này."
+            "description": "The authenticated user is not allowed to access this resource."
           },
           "404": {
-            "description": "Địa chỉ không tồn tại."
+            "description": "The requested resource was not found."
           }
-        }
+        },
+        "description": "Sets one shipping address as the authenticated user default address."
       }
     },
     "/api/products": {
@@ -1107,7 +1125,7 @@
         "tags": [
           "Products"
         ],
-        "summary": "List active catalog products",
+        "summary": "List public products",
         "parameters": [
           {
             "name": "page",
@@ -1196,9 +1214,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Product list with pagination."
+            "description": "Request completed successfully."
           }
-        }
+        },
+        "description": "Returns active products with filtering and pagination."
       }
     },
     "/api/products/{slug}": {
@@ -1206,7 +1225,7 @@
         "tags": [
           "Products"
         ],
-        "summary": "Get active product detail by slug",
+        "summary": "Get public product detail",
         "parameters": [
           {
             "name": "slug",
@@ -1219,12 +1238,13 @@
         ],
         "responses": {
           "200": {
-            "description": "Product detail."
+            "description": "Request completed successfully."
           },
           "404": {
-            "description": "Product not found or inactive."
+            "description": "The requested resource was not found."
           }
-        }
+        },
+        "description": "Returns one active product by slug."
       }
     },
     "/api/categories": {
@@ -1232,12 +1252,13 @@
         "tags": [
           "Catalog"
         ],
-        "summary": "List active category tree",
+        "summary": "List public categories",
         "responses": {
           "200": {
-            "description": "Active categories grouped as parent/children."
+            "description": "Request completed successfully."
           }
-        }
+        },
+        "description": "Returns active categories for the public catalog."
       }
     },
     "/api/brands": {
@@ -1245,12 +1266,13 @@
         "tags": [
           "Catalog"
         ],
-        "summary": "List active brands",
+        "summary": "List public brands",
         "responses": {
           "200": {
-            "description": "Active brands with active product counts."
+            "description": "Request completed successfully."
           }
-        }
+        },
+        "description": "Returns active brands for the public catalog."
       }
     },
     "/api/admin/products": {
@@ -1258,7 +1280,7 @@
         "tags": [
           "Admin Products"
         ],
-        "summary": "Admin list products",
+        "summary": "List admin products",
         "security": [
           {
             "BearerAuth": []
@@ -1266,15 +1288,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Product list with pagination."
+            "description": "Request completed successfully."
           }
-        }
+        },
+        "description": "Returns products for admin management with filtering and pagination."
       },
       "post": {
         "tags": [
           "Admin Products"
         ],
-        "summary": "Admin create product",
+        "summary": "Create product",
         "security": [
           {
             "BearerAuth": []
@@ -1367,15 +1390,16 @@
         },
         "responses": {
           "201": {
-            "description": "Product created."
+            "description": "Resource created successfully."
           },
           "400": {
-            "description": "Invalid request."
+            "description": "Invalid request data."
           },
           "403": {
-            "description": "Admin role required."
+            "description": "The authenticated user is not allowed to access this resource."
           }
-        }
+        },
+        "description": "Creates a new product."
       }
     },
     "/api/admin/products/{id}": {
@@ -1383,7 +1407,7 @@
         "tags": [
           "Admin Products"
         ],
-        "summary": "Admin update product",
+        "summary": "Update product",
         "security": [
           {
             "BearerAuth": []
@@ -1401,12 +1425,13 @@
         ],
         "responses": {
           "200": {
-            "description": "Product updated."
+            "description": "Request completed successfully."
           },
           "404": {
-            "description": "Product not found."
+            "description": "The requested resource was not found."
           }
-        }
+        },
+        "description": "Updates a product by ID."
       }
     },
     "/api/admin/products/{id}/toggle-status": {
@@ -1414,7 +1439,7 @@
         "tags": [
           "Admin Products"
         ],
-        "summary": "Admin hide or show product",
+        "summary": "Toggle product status",
         "security": [
           {
             "BearerAuth": []
@@ -1432,12 +1457,13 @@
         ],
         "responses": {
           "200": {
-            "description": "Product status toggled."
+            "description": "Request completed successfully."
           },
           "404": {
-            "description": "Product not found."
+            "description": "The requested resource was not found."
           }
-        }
+        },
+        "description": "Toggles a product active status."
       }
     }
   },

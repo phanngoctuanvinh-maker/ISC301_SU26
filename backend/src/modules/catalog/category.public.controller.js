@@ -5,9 +5,9 @@ const categoryPublicController = {
   async getTree(req, res) {
     try {
       const result = await categoryService.getActiveCategoryTree();
-      return successResponse(res, result, 'Lay danh sach danh muc thanh cong', 200);
+      return successResponse(res, result, 'Lấy danh sách danh mục thành công', 200);
     } catch (err) {
-      return errorResponse(res, 'Loi he thong', 500, err.message || err);
+      return errorResponse(res, 'Lỗi hệ thống', 500, err.message || err);
     }
   }
 };

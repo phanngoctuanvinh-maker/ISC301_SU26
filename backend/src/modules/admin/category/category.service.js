@@ -67,7 +67,7 @@ const categoryService = {
         throw { status: 404, message: 'Danh mục cha không tồn tại' };
       }
       if (parent.parent_id !== null) {
-        throw { status: 400, message: 'Không thể tạo danh mục con của danh mục con — chỉ hỗ trợ 2 tầng' };
+        throw { status: 400, message: 'Không thể tạo danh mục con của danh mục con, chỉ hỗ trợ 2 tầng' };
       }
     }
 
@@ -131,7 +131,7 @@ const categoryService = {
 
         // Danh mục cha được chọn phải là danh mục tầng 1 (parent_id = null)
         if (parentCategory.parent_id !== null) {
-          throw { status: 400, message: 'Không thể tạo danh mục con của danh mục con — chỉ hỗ trợ 2 tầng' };
+          throw { status: 400, message: 'Không thể tạo danh mục con của danh mục con, chỉ hỗ trợ 2 tầng' };
         }
 
         // Kiểm tra xem danh mục đang sửa có đang là cha của danh mục khác không (Rule 5)
