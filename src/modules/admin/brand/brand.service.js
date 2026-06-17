@@ -51,16 +51,12 @@ const brandService = {
     const logoUrl = file ? `/uploads/brands/${file.filename}` : null;
 
     // 3. Insert vào DB
-    await db.query(
+    const result = await db.query(
       'INSERT INTO brands (name, logo_url, description, is_active) VALUES (?, ?, ?, true)',
       [trimmedName, logoUrl, description || null]
     );
 
-    // 4. Lấy ID và trả về kết quả
-    const resultId = await db.query('SELECT LAST_INSERT_ID() as id');
-    const newId = resultId[0].id;
-
-    return this.getBrandById(newId);
+    return this.getBrandById(result.insertId);
   },
 
   /**

@@ -81,6 +81,24 @@ const brandStorage = multer.diskStorage({
 // Khởi tạo multer middleware cho trường "logo"
 const uploadBrandLogo = multer({ storage: brandStorage, fileFilter, limits }).single('logo');
 
+const productStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = 'uploads/products/';
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const timestamp = Date.now();
+    const randomHex = crypto.randomBytes(3).toString('hex');
+    const ext = path.extname(file.originalname);
+    cb(null, `product_${timestamp}_${randomHex}${ext}`);
+  }
+});
+
+const uploadProductImage = multer({ storage: productStorage, fileFilter, limits }).single('image');
+
 // Middleware bọc lỗi để bắt lỗi của Multer và định dạng lại response lỗi
 const handleUploadError = (uploadMiddleware) => (req, res, next) => {
   uploadMiddleware(req, res, (err) => {
@@ -108,5 +126,6 @@ module.exports = {
   uploadAvatar,
   uploadBrandLogo,
   uploadCategoryImage,
+  uploadProductImage,
   handleUploadError
 };

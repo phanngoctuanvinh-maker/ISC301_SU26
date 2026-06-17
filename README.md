@@ -372,3 +372,11 @@ npm run dev
 
 *   **API Root:** `http://localhost:8080/api`
 *   **Swagger API Documentation:** Mở trình duyệt truy cập `http://localhost:8080/swagger` để xem tài liệu chi tiết và chạy thử nghiệm trực tiếp các API.
+## MVP Backend Stage
+
+Current MVP scope is the catalog backend:
+
+* Public catalog reads: `GET /api/products`, `GET /api/products/:slug`, `GET /api/categories`, and `GET /api/brands`.
+* Admin product management: `GET/POST/PUT /api/admin/products` and `PUT /api/admin/products/:id/toggle-status`, protected by JWT admin role.
+* Existing account, profile, address, admin category, and admin brand APIs remain available.
+* Checkout, cart, order, inventory/SKU, pricing, and VNPAY payment workflows are intentionally deferred to the next backend stage.

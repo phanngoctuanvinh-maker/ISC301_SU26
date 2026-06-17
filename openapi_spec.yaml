@@ -745,6 +745,204 @@ paths:
         '404':
           description: Địa chỉ không tồn tại.
 
+  /api/products:
+    get:
+      tags:
+        - Products
+      summary: List active catalog products
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 12
+            maximum: 100
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: category_id
+          in: query
+          schema:
+            type: integer
+        - name: category_slug
+          in: query
+          schema:
+            type: string
+        - name: brand_id
+          in: query
+          schema:
+            type: integer
+        - name: gender
+          in: query
+          schema:
+            type: string
+            enum: [male, female, unisex]
+        - name: sport_type
+          in: query
+          schema:
+            type: string
+        - name: featured
+          in: query
+          schema:
+            type: boolean
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, popular, name_asc, name_desc]
+      responses:
+        '200':
+          description: Product list with pagination.
+
+  /api/products/{slug}:
+    get:
+      tags:
+        - Products
+      summary: Get active product detail by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product detail.
+        '404':
+          description: Product not found or inactive.
+
+  /api/categories:
+    get:
+      tags:
+        - Catalog
+      summary: List active category tree
+      responses:
+        '200':
+          description: Active categories grouped as parent/children.
+
+  /api/brands:
+    get:
+      tags:
+        - Catalog
+      summary: List active brands
+      responses:
+        '200':
+          description: Active brands with active product counts.
+
+  /api/admin/products:
+    get:
+      tags:
+        - Admin Products
+      summary: Admin list products
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Product list with pagination.
+    post:
+      tags:
+        - Admin Products
+      summary: Admin create product
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category_id, brand_id, name]
+              properties:
+                category_id:
+                  type: integer
+                brand_id:
+                  type: integer
+                name:
+                  type: string
+                description:
+                  type: string
+                gender:
+                  type: string
+                  enum: [male, female, unisex]
+                sport_type:
+                  type: string
+                is_featured:
+                  type: boolean
+          multipart/form-data:
+            schema:
+              type: object
+              required: [category_id, brand_id, name]
+              properties:
+                category_id:
+                  type: integer
+                brand_id:
+                  type: integer
+                name:
+                  type: string
+                description:
+                  type: string
+                gender:
+                  type: string
+                  enum: [male, female, unisex]
+                sport_type:
+                  type: string
+                is_featured:
+                  type: boolean
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Product created.
+        '400':
+          description: Invalid request.
+        '403':
+          description: Admin role required.
+
+  /api/admin/products/{id}:
+    put:
+      tags:
+        - Admin Products
+      summary: Admin update product
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product updated.
+        '404':
+          description: Product not found.
+
+  /api/admin/products/{id}/toggle-status:
+    put:
+      tags:
+        - Admin Products
+      summary: Admin hide or show product
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product status toggled.
+        '404':
+          description: Product not found.
+
 components:
   securitySchemes:
     BearerAuth:

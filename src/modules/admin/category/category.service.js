@@ -89,16 +89,12 @@ const categoryService = {
     const imageUrl = file ? `/uploads/categories/${file.filename}` : null;
 
     // 3. Thực hiện Insert
-    await db.query(
+    const result = await db.query(
       'INSERT INTO categories (parent_id, name, slug, image_url, sort_order, is_active) VALUES (?, ?, ?, ?, ?, true)',
       [parsedParentId, name.trim(), slug, imageUrl, finalSortOrder]
     );
 
-    // 4. Lấy danh mục vừa tạo
-    const resultId = await db.query('SELECT LAST_INSERT_ID() as id');
-    const newId = resultId[0].id;
-
-    return this.getCategoryById(newId);
+    return this.getCategoryById(result.insertId);
   },
 
   /**
