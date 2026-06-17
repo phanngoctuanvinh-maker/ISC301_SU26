@@ -67,6 +67,14 @@ Public catalog endpoints expose active products, categories, and brands. Admin e
 
 Admin category management supports a two-level tree. Admin brand and product management support image uploads and active/inactive toggles.
 
+### Commerce Flow
+
+Customers can add variant-based items to a cart, checkout with a saved address, and create an order snapshot with payment metadata. The backend stores order items, payment records, and inventory movements so the demo can show a complete purchase lifecycle.
+
+### Inventory and Orders
+
+Admin users can manage product variants, stock levels, low-stock signals, and order status transitions. Stock is reserved during checkout and restored when an order is cancelled.
+
 ## Database
 
 The MySQL schema and seed data live in `infra/mysql/init.sql`. Docker imports this file when the MySQL volume is created for the first time.
@@ -79,6 +87,13 @@ Core tables:
 - `categories`
 - `brands`
 - `products`
+- `product_variants`
+- `carts`
+- `cart_items`
+- `orders`
+- `order_items`
+- `payments`
+- `inventory_movements`
 
 ## Runtime Notes
 

@@ -950,6 +950,366 @@ paths:
         '404':
           description: The requested resource was not found.
       description: Toggles a product active status.
+  /api/admin/products/{id}/variants:
+    put:
+      tags:
+        - Admin Products
+      summary: Replace or update product variants
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - variants
+              properties:
+                variants:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - size
+                      - stock_quantity
+                    properties:
+                      sku:
+                        type: string
+                      size:
+                        type: string
+                        example: '40'
+                      stock_quantity:
+                        type: integer
+                        example: 10
+                      low_stock_threshold:
+                        type: integer
+                        example: 3
+                      is_active:
+                        type: boolean
+      responses:
+        '200':
+          description: Request completed successfully.
+  /api/cart:
+    get:
+      tags:
+        - Cart
+      summary: Get current cart
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Request completed successfully.
+    delete:
+      tags:
+        - Cart
+      summary: Clear current cart
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Request completed successfully.
+  /api/cart/items:
+    post:
+      tags:
+        - Cart
+      summary: Add item to cart
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - variant_id
+                - quantity
+              properties:
+                variant_id:
+                  type: integer
+                  example: 1
+                quantity:
+                  type: integer
+                  example: 1
+      responses:
+        '201':
+          description: Resource created successfully.
+  /api/cart/items/{id}:
+    put:
+      tags:
+        - Cart
+      summary: Update cart item quantity
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - quantity
+              properties:
+                quantity:
+                  type: integer
+                  example: 2
+      responses:
+        '200':
+          description: Request completed successfully.
+    delete:
+      tags:
+        - Cart
+      summary: Remove item from cart
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Request completed successfully.
+  /api/orders/checkout:
+    post:
+      tags:
+        - Orders
+      summary: Checkout current cart
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - address_id
+              properties:
+                address_id:
+                  type: integer
+                  example: 1
+                payment_method:
+                  type: string
+                  enum:
+                    - cod
+                    - vnpay
+                  example: cod
+                note:
+                  type: string
+      responses:
+        '201':
+          description: Resource created successfully.
+  /api/orders:
+    get:
+      tags:
+        - Orders
+      summary: List customer orders
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Request completed successfully.
+  /api/orders/{id}:
+    get:
+      tags:
+        - Orders
+      summary: Get customer order detail
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Request completed successfully.
+  /api/orders/{id}/cancel:
+    post:
+      tags:
+        - Orders
+      summary: Cancel customer order
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Request completed successfully.
+  /api/orders/vnpay/return:
+    get:
+      tags:
+        - Payments
+      summary: Handle VNPAY return callback
+      responses:
+        '200':
+          description: Request completed successfully.
+  /api/admin/inventory:
+    get:
+      tags:
+        - Admin Inventory
+      summary: List product variant inventory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: low_stock
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Request completed successfully.
+  /api/admin/inventory/adjustments:
+    post:
+      tags:
+        - Admin Inventory
+      summary: Adjust inventory manually
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - variant_id
+                - type
+                - quantity
+              properties:
+                variant_id:
+                  type: integer
+                  example: 1
+                type:
+                  type: string
+                  enum:
+                    - in
+                    - out
+                    - adjustment
+                quantity:
+                  type: integer
+                  example: 5
+                note:
+                  type: string
+      responses:
+        '200':
+          description: Request completed successfully.
+  /api/admin/orders:
+    get:
+      tags:
+        - Admin Orders
+      summary: List all orders
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Request completed successfully.
+  /api/admin/orders/{id}:
+    get:
+      tags:
+        - Admin Orders
+      summary: Get admin order detail
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Request completed successfully.
+  /api/admin/orders/{id}/status:
+    put:
+      tags:
+        - Admin Orders
+      summary: Update order status
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - pending
+                    - confirmed
+                    - shipping
+                    - completed
+                    - cancelled
+      responses:
+        '200':
+          description: Request completed successfully.
+  /api/admin/orders/{id}/payment-status:
+    put:
+      tags:
+        - Admin Orders
+      summary: Update order payment status
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - payment_status
+              properties:
+                payment_status:
+                  type: string
+                  enum:
+                    - unpaid
+                    - pending
+                    - paid
+                    - failed
+                    - refunded
+      responses:
+        '200':
+          description: Request completed successfully.
 components:
   securitySchemes:
     BearerAuth:

@@ -24,6 +24,7 @@ const state = {
       slug: 'nike-runner',
       description: 'Daily running shoe',
       main_image_url: '/uploads/products/nike-runner.png',
+      price: 2500000,
       gender: 'unisex',
       sport_type: 'running',
       is_active: 1,
@@ -40,6 +41,7 @@ const state = {
       slug: 'hidden-shoe',
       description: 'Inactive',
       main_image_url: null,
+      price: 1000000,
       gender: 'male',
       sport_type: 'running',
       is_active: 0,
@@ -64,11 +66,24 @@ function productRow(product) {
 }
 
 const mockDb = {
-  pool: {},
+  pool: {
+    async getConnection() {
+      return {
+        async beginTransaction() {},
+        async commit() {},
+        async rollback() {},
+        release() {},
+        async execute(sql, params = []) {
+          const result = await mockDb.query(sql, params);
+          return [Array.isArray(result) ? result : result];
+        }
+      };
+    }
+  },
   async query(sql, params = []) {
     const compactSql = sql.replace(/\s+/g, ' ').trim();
 
-    if (compactSql.includes('FROM products p') && compactSql.includes('COUNT(*) AS total')) {
+    if (compactSql.includes('FROM products p') && compactSql.includes('COUNT') && compactSql.includes('AS total')) {
       return [{ total: state.products.filter(product => product.is_active).length }];
     }
 
@@ -85,10 +100,11 @@ const mockDb = {
         slug: params[3],
         description: params[4],
         main_image_url: params[5],
-        gender: params[6],
-        sport_type: params[7],
+        price: params[6],
+        gender: params[7],
+        sport_type: params[8],
         is_active: 1,
-        is_featured: params[8],
+        is_featured: params[9],
         sold_count: 0,
         created_at: '2026-06-18T00:00:00.000Z',
         updated_at: '2026-06-18T00:00:00.000Z'
@@ -223,13 +239,15 @@ test('admin product routes require admin role and create products with insertId'
   const forbidden = await request(app, 'POST', '/api/admin/products', {
     category_id: 2,
     brand_id: 1,
-    name: 'Customer Product'
+    name: 'Customer Product',
+    price: 2500000
   }, { Authorization: `Bearer ${customerToken}` });
 
   const created = await request(app, 'POST', '/api/admin/products', {
     category_id: 2,
     brand_id: 1,
     name: 'Admin Product',
+    price: 2500000,
     gender: 'unisex',
     sport_type: 'running',
     is_featured: true
@@ -252,4 +270,32 @@ test('admin can toggle product active status', async () => {
   assert.equal(response.status, 200);
   assert.equal(response.body.data.id, 1);
   assert.equal(response.body.data.is_active, 0);
+});
+
+test('commerce routes are mounted and require authentication', async () => {
+  const app = createApp();
+
+  const cart = await request(app, 'GET', '/api/cart');
+  const checkout = await request(app, 'POST', '/api/orders/checkout', {
+    address_id: 1,
+    payment_method: 'cod'
+  });
+
+  assert.equal(cart.status, 401);
+  assert.equal(checkout.status, 401);
+});
+
+test('admin commerce routes reject customer role before database access', async () => {
+  const app = createApp();
+  const customerToken = jwt.sign({ userId: 2, email: 'user@example.com', role: 'customer' }, process.env.JWT_SECRET);
+
+  const inventory = await request(app, 'GET', '/api/admin/inventory', null, {
+    Authorization: `Bearer ${customerToken}`
+  });
+  const orders = await request(app, 'GET', '/api/admin/orders', null, {
+    Authorization: `Bearer ${customerToken}`
+  });
+
+  assert.equal(inventory.status, 403);
+  assert.equal(orders.status, 403);
 });
