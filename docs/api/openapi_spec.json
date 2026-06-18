@@ -2,13 +2,17 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Shoes Store API Specification",
-    "description": "Complete OpenAPI specification for the Shoes Store backend built with Node.js, Express, and MySQL.",
-    "version": "1.0.0"
+    "description": "Complete OpenAPI specification for the Shoes Store backend built with Node.js, Express, and MySQL. All endpoints include example data for easy testing.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Shoes Store API Support",
+      "email": "support@shoesstore.com"
+    }
   },
   "servers": [
     {
       "url": "http://localhost:8080",
-      "description": "Local Server"
+      "description": "Local Development Server"
     }
   ],
   "paths": {
@@ -33,24 +37,27 @@
                 "properties": {
                   "full_name": {
                     "type": "string",
-                    "example": "example",
+                    "example": "John Smith",
                     "minLength": 2,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "description": "Full name of the user (2-100 characters)"
                   },
                   "email": {
                     "type": "string",
                     "format": "email",
-                    "example": "nguyenvana@gmail.com"
+                    "example": "john.smith@gmail.com",
+                    "description": "Valid email address for account registration"
                   },
                   "password": {
                     "type": "string",
-                    "example": "Password123",
-                    "description": "See schema constraints."
+                    "example": "Password123!@#",
+                    "description": "Password must contain uppercase, lowercase, and numbers. Minimum 8 characters."
                   },
                   "phone": {
                     "type": "string",
-                    "example": 987654321,
-                    "pattern": "^0\\d{9}$"
+                    "example": "0987654321",
+                    "pattern": "^0\\d{9}$",
+                    "description": "Vietnamese phone number format (10 digits starting with 0)"
                   }
                 }
               }
@@ -59,10 +66,57 @@
         },
         "responses": {
           "201": {
-            "description": "Resource created successfully."
+            "description": "Resource created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Registration successful! Please check your email to verify your account."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string",
+                          "example": "john.smith@gmail.com"
+                        },
+                        "otp_sent": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "description": "Invalid request data."
+            "description": "Invalid request data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Email is already in use"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -88,11 +142,13 @@
                   "email": {
                     "type": "string",
                     "format": "email",
-                    "example": "nguyenvana@gmail.com"
+                    "example": "john.smith@gmail.com",
+                    "description": "Email address used during registration"
                   },
                   "otp": {
                     "type": "string",
-                    "example": "123456"
+                    "example": "123456",
+                    "description": "Six-digit OTP code sent to email"
                   }
                 }
               }
@@ -101,10 +157,74 @@
         },
         "responses": {
           "200": {
-            "description": "Request completed successfully."
+            "description": "Request completed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "OTP verification successful! Account has been activated."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string",
+                          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTcwOTEyMzQ1NiwiZXhwIjoxNzA5NzI4MjU2fQ.abc123xyz"
+                        },
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "example": 2
+                            },
+                            "full_name": {
+                              "type": "string",
+                              "example": "John Smith"
+                            },
+                            "email": {
+                              "type": "string",
+                              "example": "john.smith@gmail.com"
+                            },
+                            "role": {
+                              "type": "string",
+                              "example": "customer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "description": "Invalid request data."
+            "description": "Invalid request data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "OTP code is invalid or has expired"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -129,7 +249,8 @@
                   "email": {
                     "type": "string",
                     "format": "email",
-                    "example": "nguyenvana@gmail.com"
+                    "example": "john.smith@gmail.com",
+                    "description": "Email address to resend OTP"
                   }
                 }
               }
@@ -138,10 +259,44 @@
         },
         "responses": {
           "200": {
-            "description": "Request completed successfully."
+            "description": "Request completed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "A new OTP code has been sent to your email"
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
-            "description": "Invalid request data."
+            "description": "Invalid request data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "No registration request found for this email"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -167,11 +322,13 @@
                   "email": {
                     "type": "string",
                     "format": "email",
-                    "example": "admin@gmail.com"
+                    "example": "admin@gmail.com",
+                    "description": "Registered email address"
                   },
                   "password": {
                     "type": "string",
-                    "example": "AdminPassword123"
+                    "example": "AdminPassword123",
+                    "description": "Account password"
                   }
                 }
               }
@@ -192,14 +349,15 @@
                     },
                     "message": {
                       "type": "string",
-                      "example": "example"
+                      "example": "Login successful"
                     },
                     "data": {
                       "type": "object",
                       "properties": {
                         "token": {
                           "type": "string",
-                          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTcwOTEyMzQ1NiwiZXhwIjoxNzA5NzI4MjU2fQ.sample_jwt_token_here",
+                          "description": "JWT token for authentication (valid for 7 days)"
                         },
                         "user": {
                           "type": "object",
@@ -218,7 +376,8 @@
                             },
                             "role": {
                               "type": "string",
-                              "example": "admin"
+                              "example": "admin",
+                              "enum": ["admin", "customer"]
                             }
                           }
                         }
@@ -230,7 +389,24 @@
             }
           },
           "401": {
-            "description": "Authentication is required or invalid."
+            "description": "Authentication is required or invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Incorrect email or password"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -254,7 +430,8 @@
                 "properties": {
                   "credential": {
                     "type": "string",
-                    "example": "Google_Id_Token_String_Here"
+                    "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjZmNzI1NDEwMWY1NmU0MWNmMzVjOTkyNmRlODRhMmQ1NTJiNGM2ZjEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiJZT1VSX0NMSUVOVF9JRC5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsImF1ZCI6IllPVVJfQ0xJRU5UX0lELmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTIzNDU2Nzg5MDEyMzQ1Njc4OTAiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwibmFtZSI6IlRlc3QgVXNlciIsInBpY3R1cmUiOiJodHRwczovL2V4YW1wbGUuY29tL3Bob3RvLmpwZyIsImdpdmVuX25hbWUiOiJUZXN0IiwiZmFtaWx5X25hbWUiOiJVc2VyIiwiaWF0IjoxNzA5MTIzNDU2LCJleHAiOjE3MDkxMjcwNTZ9.sample_google_id_token",
+                    "description": "Google ID Token obtained from Google Sign-In"
                   }
                 }
               }
@@ -263,7 +440,54 @@
         },
         "responses": {
           "200": {
-            "description": "Request completed successfully."
+            "description": "Request completed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Google login successful"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string",
+                          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsInJvbGUiOiJjdXN0b21lciIsImlhdCI6MTcwOTEyMzQ1NiwiZXhwIjoxNzA5NzI4MjU2fQ.sample_jwt_token"
+                        },
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "example": 3
+                            },
+                            "full_name": {
+                              "type": "string",
+                              "example": "Test User"
+                            },
+                            "email": {
+                              "type": "string",
+                              "example": "user@example.com"
+                            },
+                            "role": {
+                              "type": "string",
+                              "example": "customer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -281,7 +505,65 @@
         ],
         "responses": {
           "200": {
-            "description": "Request completed successfully."
+            "description": "Request completed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Profile retrieved successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 2
+                        },
+                        "full_name": {
+                          "type": "string",
+                          "example": "John Smith"
+                        },
+                        "email": {
+                          "type": "string",
+                          "example": "john.smith@gmail.com"
+                        },
+                        "phone": {
+                          "type": "string",
+                          "example": "0987654321"
+                        },
+                        "address": {
+                          "type": "string",
+                          "example": "123 Main Street, District 1"
+                        },
+                        "gender": {
+                          "type": "string",
+                          "example": "nam"
+                        },
+                        "dob": {
+                          "type": "string",
+                          "example": "1995-10-15"
+                        },
+                        "avatar_url": {
+                          "type": "string",
+                          "example": "http://localhost:8080/uploads/avatars/user_2.jpg"
+                        },
+                        "role": {
+                          "type": "string",
+                          "example": "customer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "description": "Returns the authenticated user profile."
@@ -305,15 +587,18 @@
                 "properties": {
                   "full_name": {
                     "type": "string",
-                    "example": "example"
+                    "example": "Jane Doe",
+                    "description": "Full name (2-100 characters)"
                   },
                   "phone": {
                     "type": "string",
-                    "example": 912345678
+                    "example": "0912345678",
+                    "description": "Vietnamese phone number (10 digits starting with 0)"
                   },
                   "address": {
                     "type": "string",
-                    "example": "example"
+                    "example": "123 Main Street, Downtown, District 1",
+                    "description": "Full address"
                   },
                   "gender": {
                     "type": "string",
@@ -366,11 +651,13 @@
                 "properties": {
                   "old_password": {
                     "type": "string",
-                    "example": "Password123"
+                    "example": "Password123!@#",
+                    "description": "Current password"
                   },
                   "new_password": {
                     "type": "string",
-                    "example": "NewPassword123"
+                    "example": "NewPassword456!@#",
+                    "description": "New password (must contain uppercase, lowercase, numbers)"
                   }
                 }
               }
@@ -467,17 +754,18 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "example": "example"
+                    "example": "Men's Athletic Shoes",
+                    "description": "Category name"
                   },
                   "parent_id": {
                     "type": "string",
                     "example": "1",
-                    "description": "See schema constraints."
+                    "description": "Parent category ID (optional, for subcategories)"
                   },
                   "sort_order": {
                     "type": "string",
                     "example": "1",
-                    "description": "See schema constraints."
+                    "description": "Display order (integer)"
                   },
                   "image": {
                     "type": "string",
@@ -528,15 +816,18 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "example": "example"
+                    "example": "Men's Running Shoes",
+                    "description": "Updated category name"
                   },
                   "parent_id": {
                     "type": "string",
-                    "example": "1"
+                    "example": "1",
+                    "description": "New parent category ID (optional)"
                   },
                   "sort_order": {
                     "type": "string",
-                    "example": "5"
+                    "example": "5",
+                    "description": "Updated display order"
                   },
                   "image": {
                     "type": "string",
@@ -680,11 +971,13 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "example": "Nike"
+                    "example": "Nike",
+                    "description": "Brand name"
                   },
                   "description": {
                     "type": "string",
-                    "example": "example"
+                    "example": "Leading sports footwear and apparel brand",
+                    "description": "Brand description (optional)"
                   },
                   "logo": {
                     "type": "string",
@@ -735,11 +1028,13 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "example": "Nike Store"
+                    "example": "Nike Sportswear",
+                    "description": "Updated brand name"
                   },
                   "description": {
                     "type": "string",
-                    "example": "example"
+                    "example": "Premium athletic footwear and lifestyle products",
+                    "description": "Updated brand description"
                   },
                   "logo": {
                     "type": "string",
@@ -902,36 +1197,42 @@
                 "properties": {
                   "receiver_name": {
                     "type": "string",
-                    "example": "example",
+                    "example": "Emily Wilson",
                     "minLength": 2,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "description": "Name of the person receiving the delivery"
                   },
                   "phone": {
                     "type": "string",
                     "example": "0987654321",
-                    "pattern": "^0\\d{9}$"
+                    "pattern": "^0\\d{9}$",
+                    "description": "Contact phone number (10 digits starting with 0)"
                   },
                   "address_line": {
                     "type": "string",
-                    "example": "example",
+                    "example": "456 Park Avenue",
                     "minLength": 5,
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "description": "Street address"
                   },
                   "ward": {
                     "type": "string",
-                    "example": "example",
+                    "example": "Ben Nghe Ward",
                     "maxLength": 100,
-                    "nullable": true
+                    "nullable": true,
+                    "description": "Ward/Commune (optional)"
                   },
                   "district": {
                     "type": "string",
-                    "example": "example",
-                    "maxLength": 100
+                    "example": "District 1",
+                    "maxLength": 100,
+                    "description": "District"
                   },
                   "city": {
                     "type": "string",
-                    "example": "example",
-                    "maxLength": 100
+                    "example": "Ho Chi Minh City",
+                    "maxLength": 100,
+                    "description": "City/Province"
                   }
                 }
               }
@@ -997,36 +1298,42 @@
                 "properties": {
                   "receiver_name": {
                     "type": "string",
-                    "example": "example",
+                    "example": "Michael Chen",
                     "minLength": 2,
-                    "maxLength": 100
+                    "maxLength": 100,
+                    "description": "Updated receiver name"
                   },
                   "phone": {
                     "type": "string",
                     "example": "0912345678",
-                    "pattern": "^0\\d{9}$"
+                    "pattern": "^0\\d{9}$",
+                    "description": "Updated contact phone"
                   },
                   "address_line": {
                     "type": "string",
-                    "example": "example",
+                    "example": "789 Oak Street",
                     "minLength": 5,
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "description": "Updated street address"
                   },
                   "ward": {
                     "type": "string",
-                    "example": "example",
+                    "example": "Ward 6",
                     "maxLength": 100,
-                    "nullable": true
+                    "nullable": true,
+                    "description": "Updated ward (optional)"
                   },
                   "district": {
                     "type": "string",
-                    "example": "example",
-                    "maxLength": 100
+                    "example": "District 3",
+                    "maxLength": 100,
+                    "description": "Updated district"
                   },
                   "city": {
                     "type": "string",
-                    "example": "example",
-                    "maxLength": 100
+                    "example": "Ho Chi Minh City",
+                    "maxLength": 100,
+                    "description": "Updated city"
                   }
                 }
               }
@@ -1316,16 +1623,24 @@
                 ],
                 "properties": {
                   "category_id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 2,
+                    "description": "Category ID (must exist)"
                   },
                   "brand_id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1,
+                    "description": "Brand ID (must exist)"
                   },
                   "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Nike Air Zoom Pegasus 40",
+                    "description": "Product name"
                   },
                   "description": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "High-performance running shoes with Zoom Air cushioning, suitable for runners of all distances",
+                    "description": "Product description (optional)"
                   },
                   "gender": {
                     "type": "string",
@@ -1333,13 +1648,19 @@
                       "male",
                       "female",
                       "unisex"
-                    ]
+                    ],
+                    "example": "male",
+                    "description": "Target gender"
                   },
                   "sport_type": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "running",
+                    "description": "Sport/Activity type (optional)"
                   },
                   "is_featured": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": true,
+                    "description": "Featured product flag"
                   }
                 }
               }
@@ -1354,16 +1675,24 @@
                 ],
                 "properties": {
                   "category_id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 2,
+                    "description": "Category ID"
                   },
                   "brand_id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1,
+                    "description": "Brand ID"
                   },
                   "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Adidas Ultraboost 23",
+                    "description": "Product name"
                   },
                   "description": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Running shoes with Boost technology for soft cushioning and excellent energy return",
+                    "description": "Product description"
                   },
                   "gender": {
                     "type": "string",
@@ -1371,17 +1700,24 @@
                       "male",
                       "female",
                       "unisex"
-                    ]
+                    ],
+                    "example": "female",
+                    "description": "Target gender"
                   },
                   "sport_type": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "running",
+                    "description": "Sport type"
                   },
                   "is_featured": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": false,
+                    "description": "Featured status"
                   },
                   "image": {
                     "type": "string",
-                    "format": "binary"
+                    "format": "binary",
+                    "description": "Product image file (JPEG/PNG, max 5MB)"
                   }
                 }
               }
@@ -1507,22 +1843,29 @@
                       ],
                       "properties": {
                         "sku": {
-                          "type": "string"
+                          "type": "string",
+                          "example": "NK-PEG40-BLK-40",
+                          "description": "Stock Keeping Unit (optional, auto-generated if not provided)"
                         },
                         "size": {
                           "type": "string",
-                          "example": "40"
+                          "example": "40",
+                          "description": "Shoe size (e.g., 38, 39, 40, 41, 42)"
                         },
                         "stock_quantity": {
                           "type": "integer",
-                          "example": 10
+                          "example": 50,
+                          "description": "Available stock quantity"
                         },
                         "low_stock_threshold": {
                           "type": "integer",
-                          "example": 3
+                          "example": 5,
+                          "description": "Alert when stock falls below this number"
                         },
                         "is_active": {
-                          "type": "boolean"
+                          "type": "boolean",
+                          "example": true,
+                          "description": "Variant active status"
                         }
                       }
                     }
@@ -1597,11 +1940,14 @@
                 "properties": {
                   "variant_id": {
                     "type": "integer",
-                    "example": 1
+                    "example": 15,
+                    "description": "Product variant ID (size-specific product)"
                   },
                   "quantity": {
                     "type": "integer",
-                    "example": 1
+                    "example": 2,
+                    "minimum": 1,
+                    "description": "Quantity to add to cart"
                   }
                 }
               }
@@ -1648,7 +1994,9 @@
                 "properties": {
                   "quantity": {
                     "type": "integer",
-                    "example": 2
+                    "example": 3,
+                    "minimum": 1,
+                    "description": "Updated quantity"
                   }
                 }
               }
@@ -1711,7 +2059,8 @@
                 "properties": {
                   "address_id": {
                     "type": "integer",
-                    "example": 1
+                    "example": 1,
+                    "description": "Shipping address ID (must be owned by current user)"
                   },
                   "payment_method": {
                     "type": "string",
@@ -1719,10 +2068,13 @@
                       "cod",
                       "vnpay"
                     ],
-                    "example": "cod"
+                    "example": "cod",
+                    "description": "Payment method: cod (Cash on Delivery) or vnpay (VNPay gateway)"
                   },
                   "note": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Please call before delivery",
+                    "description": "Delivery note (optional)"
                   }
                 }
               }
@@ -1882,7 +2234,8 @@
                 "properties": {
                   "variant_id": {
                     "type": "integer",
-                    "example": 1
+                    "example": 25,
+                    "description": "Product variant ID to adjust"
                   },
                   "type": {
                     "type": "string",
@@ -1890,14 +2243,20 @@
                       "in",
                       "out",
                       "adjustment"
-                    ]
+                    ],
+                    "example": "in",
+                    "description": "Adjustment type: in (stock in), out (stock out), adjustment (correction)"
                   },
                   "quantity": {
                     "type": "integer",
-                    "example": 5
+                    "example": 100,
+                    "minimum": 1,
+                    "description": "Quantity to adjust"
                   },
                   "note": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Stock received from Nike supplier",
+                    "description": "Reason for adjustment (optional)"
                   }
                 }
               }
@@ -1996,7 +2355,9 @@
                       "shipping",
                       "completed",
                       "cancelled"
-                    ]
+                    ],
+                    "example": "confirmed",
+                    "description": "New order status"
                   }
                 }
               }
@@ -2049,7 +2410,9 @@
                       "paid",
                       "failed",
                       "refunded"
-                    ]
+                    ],
+                    "example": "paid",
+                    "description": "New payment status"
                   }
                 }
               }
