@@ -35,6 +35,17 @@ app.use('/api/profile', require('./src/modules/profile/profile.routes'));
 app.use('/api/addresses', require('./src/modules/address/address.routes'));
 app.use('/api/admin/categories', require('./src/modules/admin/category/category.routes'));
 app.use('/api/admin/brands', require('./src/modules/admin/brand/brand.routes'));
+app.use('/api/admin/products', require('./src/modules/admin/product/product.routes'));
+app.use('/api/admin', require('./src/modules/admin/variant/variant.routes'));
+app.use('/api/admin/banners', require('./src/modules/admin/banner/banner.routes'));
+
+app.use('/api/products', require('./src/modules/product/product.routes'));
+app.use('/api/categories', require('./src/modules/category/category.public.routes'));
+app.use('/api/brands', require('./src/modules/brand/brand.public.routes'));
+// app.use('/api/cart', require('./src/modules/cart/cart.routes')); // Chưa có file route
+app.use('/api/wishlist', require('./src/modules/wishlist/wishlist.routes'));
+// app.use('/api/orders', require('./src/modules/order/order.routes')); // Chưa có file route
+app.use('/api/banners', require('./src/modules/banner/banner.routes'));
 
 // Phục vụ các tệp tĩnh Frontend
 app.use(express.static(path.join(__dirname, 'public')));

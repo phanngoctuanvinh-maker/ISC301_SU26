@@ -1,6 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import Login from './pages/Login';
@@ -11,24 +10,39 @@ import Addresses from './pages/Addresses';
 import Dashboard from './pages/admin/Dashboard';
 import Categories from './pages/admin/Categories';
 import Brands from './pages/admin/Brands';
+import Products from './pages/admin/Products';
+import Variants from './pages/admin/Variants';
+import Banners from './pages/admin/Banners';
+import Home from './pages/Home';
+import ProductDetail from './pages/ProductDetail';
+import Wishlist from './pages/Wishlist';
+import Cart from './pages/Cart';
+
+// Layout components
+import UserLayout from './layouts/UserLayout';
+import AdminLayout from './layouts/AdminLayout';
+import AuthLayout from './layouts/AuthLayout';
+
 import './App.css';
 
 function App() {
   return (
     <Router>
-      <Navbar />
-      
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Routes>
-          {/* Default Route redirects to Profile if logged in, otherwise to Login */}
-          <Route path="/" element={<Navigate to="/profile" replace />} />
-          
-          {/* Auth Routes */}
+      <Routes>
+        {/* Auth Layout (Centered forms, no navbars) */}
+        <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />
+        </Route>
+
+        {/* User / Customer Layout (Persistent storefront header) */}
+        <Route element={<UserLayout />}>
+          {/* Homepage */}
+          <Route path="/" element={<Home />} />
+          <Route path="/product/:slug" element={<ProductDetail />} />
           
-          {/* Protected Routes */}
+          {/* Protected Customer Routes */}
           <Route 
             path="/profile" 
             element={
@@ -45,39 +59,48 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/wishlist" 
+            element={
+              <ProtectedRoute>
+                <Wishlist />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/cart" 
+            element={
+              <ProtectedRoute>
+                <Cart />
+              </ProtectedRoute>
+            } 
+          />
+        </Route>
 
-          {/* Admin Routes */}
-          <Route 
-            path="/admin" 
-            element={
-              <AdminRoute>
-                <Dashboard />
-              </AdminRoute>
-            } 
-          />
-          <Route 
-            path="/admin/categories" 
-            element={
-              <AdminRoute>
-                <Categories />
-              </AdminRoute>
-            } 
-          />
-          <Route 
-            path="/admin/brands" 
-            element={
-              <AdminRoute>
-                <Brands />
-              </AdminRoute>
-            } 
-          />
-          
-          {/* Fallback Route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
+        {/* Admin Layout (Dedicated sidebar navigation dashboard) */}
+        <Route 
+          path="/admin" 
+          element={
+            <AdminRoute>
+              <AdminLayout />
+            </AdminRoute>
+          }
+        >
+          {/* Admin nested routes */}
+          <Route index element={<Dashboard />} />
+          <Route path="products" element={<Products />} />
+          <Route path="products/:productId/variants" element={<Variants />} />
+          <Route path="categories" element={<Categories />} />
+          <Route path="brands" element={<Brands />} />
+          <Route path="banners" element={<Banners />} />
+        </Route>
+        
+        {/* Fallback Route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </Router>
   );
 }
 
 export default App;
+

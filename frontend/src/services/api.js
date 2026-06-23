@@ -33,10 +33,14 @@ api.interceptors.response.use(
     }
 
     if (status === 401) {
-      // Token expired or invalid, clear localStorage and redirect to login
+      // Token expired or invalid, clear localStorage
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      if (window.location.pathname !== '/login') {
+      
+      const protectedPaths = ['/profile', '/addresses', '/wishlist', '/cart', '/admin'];
+      const isProtected = protectedPaths.some(p => window.location.pathname.startsWith(p));
+      
+      if (isProtected && window.location.pathname !== '/login') {
         window.location.href = '/login';
       }
     }

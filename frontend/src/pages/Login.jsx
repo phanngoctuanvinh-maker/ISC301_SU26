@@ -13,10 +13,13 @@ function Login() {
     // Check if google API is loaded
     const initializeGoogleSignIn = () => {
       if (window.google && window.google.accounts) {
-        window.google.accounts.id.initialize({
-          client_id: "692041190359-0s3ue359u3q2tj949dg3a4ddhsockit9.apps.googleusercontent.com",
-          callback: handleGoogleLoginSuccess
-        });
+        if (!window.google_initialized) {
+          window.google.accounts.id.initialize({
+            client_id: "692041190359-0s3ue359u3q2tj949dg3a4ddhsockit9.apps.googleusercontent.com",
+            callback: handleGoogleLoginSuccess
+          });
+          window.google_initialized = true;
+        }
 
         window.google.accounts.id.renderButton(
           document.getElementById("googleBtn"),
@@ -55,7 +58,7 @@ function Login() {
       localStorage.setItem('token', apiResponse.data.token);
       localStorage.setItem('user', JSON.stringify(apiResponse.data.user));
       
-      navigate('/profile');
+      navigate('/');
     } catch (err) {
       setError(err.message || 'Đăng nhập Google thất bại, vui lòng thử lại');
     } finally {
@@ -75,7 +78,7 @@ function Login() {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       
-      navigate('/profile');
+      navigate('/');
     } catch (err) {
       setError(err.message || 'Sai thông tin đăng nhập');
     } finally {

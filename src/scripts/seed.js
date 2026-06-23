@@ -32,19 +32,17 @@ async function seed() {
   await db.query('TRUNCATE TABLE categories');
   await db.query('TRUNCATE TABLE brands');
   
-  // 1. Seed Brands (25 rows)
+  // 1. Seed Brands (15 rows)
   console.log('Seeding brands...');
   const brandNames = [
-    'Nike', 'Adidas', 'Puma', 'Reebok', 'Vans', 
-    'Converse', 'New Balance', 'Jordan', 'Under Armour', 'Asics', 
-    'Balenciaga', 'Yeezy', 'Fila', 'Crocs', 'Skechers', 
-    'Mizuno', 'Timberland', 'Dr. Martens', 'Supreme', 'Gucci', 
-    'Prada', 'Alexander McQueen', 'Off-White', 'Salomon', 'Lacoste'
+    'Nike', 'Adidas', 'Puma', 'Reebok', 'Jordan', 
+    'Under Armour', 'Asics', 'New Balance', 'Mizuno', 'Salomon', 
+    'Skechers', 'Fila', 'Converse', 'Vans', 'Li-Ning'
   ];
   
   const brandIds = [];
   for (const name of brandNames) {
-    const desc = `Thương hiệu giày và thời trang ${name} nổi tiếng toàn cầu.`;
+    const desc = `Thương hiệu thể thao ${name} nổi tiếng toàn cầu.`;
     const slug = toSlug(name);
     await db.query(
       'INSERT INTO brands (name, logo_url, description, is_active) VALUES (?, ?, ?, ?)',
@@ -55,14 +53,12 @@ async function seed() {
   }
   console.log(`Seeded ${brandIds.length} brands.`);
 
-  // 2. Seed Categories (25 rows, 2-level parent-child tree)
+  // 2. Seed Categories (2-level parent-child tree)
   console.log('Seeding categories...');
   const parentCategories = [
     { name: 'Giày Thể Thao', slug: 'giay-the-thao', sort_order: 1 },
-    { name: 'Giày Tây & Công Sở', slug: 'giay-tay-cong-so', sort_order: 2 },
-    { name: 'Giày Casual & Hằng Ngày', slug: 'giay-casual-hang-ngay', sort_order: 3 },
-    { name: 'Phụ Kiện Giày', slug: 'phu-kien-giay', sort_order: 4 },
-    { name: 'Giày Sandal & Dép', slug: 'giay-sandal-dep', sort_order: 5 }
+    { name: 'Phụ Kiện Thể Thao', slug: 'phu-kien', sort_order: 2 },
+    { name: 'Sandal & Dép Thể Thao', slug: 'sandal-dep-the-thao', sort_order: 3 }
   ];
 
   const parentIds = [];
@@ -76,35 +72,23 @@ async function seed() {
   }
 
   const childCategories = [
-    // Under Sports Shoes (parentIds[0])
+    // Under Giày Thể Thao (parentIds[0])
     { parentIdx: 0, name: 'Giày Chạy Bộ', slug: 'giay-chay-bo', sort_order: 1 },
     { parentIdx: 0, name: 'Giày Bóng Rổ', slug: 'giay-bong-ro', sort_order: 2 },
     { parentIdx: 0, name: 'Giày Đá Bóng', slug: 'giay-da-bong', sort_order: 3 },
     { parentIdx: 0, name: 'Giày Tập Luyện', slug: 'giay-tap-luyen', sort_order: 4 },
     { parentIdx: 0, name: 'Giày Tennis', slug: 'giay-tennis', sort_order: 5 },
+    { parentIdx: 0, name: 'Giày Sneaker Thể Thao', slug: 'giay-sneaker-the-thao', sort_order: 6 },
 
-    // Under Formal Shoes (parentIds[1])
-    { parentIdx: 1, name: 'Giày Oxford', slug: 'giay-oxford', sort_order: 1 },
-    { parentIdx: 1, name: 'Giày Derby', slug: 'giay-derby', sort_order: 2 },
-    { parentIdx: 1, name: 'Giày Loafer', slug: 'giay-loafer', sort_order: 3 },
-    { parentIdx: 1, name: 'Giày Chelsea Boot', slug: 'giay-chelsea-boot', sort_order: 4 },
+    // Under Phụ Kiện Thể Thao (parentIds[1])
+    { parentIdx: 1, name: 'Vớ & Tất Thể Thao', slug: 'vo-tat-the-thao', sort_order: 1 },
+    { parentIdx: 1, name: 'Lót Giày Thể Thao', slug: 'lot-giay-the-thao', sort_order: 2 },
+    { parentIdx: 1, name: 'Dây Giày Thể Thao', slug: 'day-giay-the-thao', sort_order: 3 },
+    { parentIdx: 1, name: 'Chai Xịt Khử Mùi', slug: 'chai-xit-khu-mui', sort_order: 4 },
 
-    // Under Casual Shoes (parentIds[2])
-    { parentIdx: 2, name: 'Giày Sneaker Cổ Thấp', slug: 'giay-sneaker-co-thap', sort_order: 1 },
-    { parentIdx: 2, name: 'Giày Sneaker Cổ Cao', slug: 'giay-sneaker-co-cao', sort_order: 2 },
-    { parentIdx: 2, name: 'Giày Slip-on', slug: 'giay-slip-on', sort_order: 3 },
-    { parentIdx: 2, name: 'Giày Da Lộn', slug: 'giay-da-lon', sort_order: 4 },
-
-    // Under Accessories (parentIds[3])
-    { parentIdx: 3, name: 'Vớ & Tất', slug: 'vo-tat', sort_order: 1 },
-    { parentIdx: 3, name: 'Lót Giày Thể Thao', slug: 'lot-giay-the-thao', sort_order: 2 },
-    { parentIdx: 3, name: 'Dây Giày Tròn', slug: 'day-giay-tron', sort_order: 3 },
-    { parentIdx: 3, name: 'Dây Giày Dẹt', slug: 'day-giay-det', sort_order: 4 },
-    { parentIdx: 3, name: 'Chai Xịt Khử Mùi', slug: 'chai-xit-khu-mui', sort_order: 5 },
-
-    // Under Sandals & Slippers (parentIds[4])
-    { parentIdx: 4, name: 'Dép Bánh Mì', slug: 'dep-banh-mi', sort_order: 1 },
-    { parentIdx: 4, name: 'Sandal Thể Thao', slug: 'sandal-the-thao', sort_order: 2 }
+    // Under Sandal & Dép Thể Thao (parentIds[2])
+    { parentIdx: 2, name: 'Dép Slide Thể Thao', slug: 'dep-slide-the-thao', sort_order: 1 },
+    { parentIdx: 2, name: 'Sandal Dã Ngoại', slug: 'sandal-da-ngoai', sort_order: 2 }
   ];
 
   const childIds = [];
@@ -122,31 +106,31 @@ async function seed() {
   // 3. Seed Products (25 rows, linked to categories & brands)
   console.log('Seeding products...');
   const productData = [
-    { name: 'Nike Air Force 1', categoryIdx: 9, gender: 'unisex', sport_type: 'lifestyle' }, // Sneaker Cổ Thấp
+    { name: 'Nike Air Force 1', categoryIdx: 5, gender: 'unisex', sport_type: 'lifestyle' }, // Giày Sneaker Thể Thao
     { name: 'Adidas Ultraboost 22', categoryIdx: 0, gender: 'unisex', sport_type: 'running' }, // Giày Chạy Bộ
-    { name: 'Puma Suede Classic', categoryIdx: 9, gender: 'unisex', sport_type: 'lifestyle' }, // Sneaker Cổ Thấp
-    { name: 'Reebok Club C 85', categoryIdx: 9, gender: 'unisex', sport_type: 'lifestyle' }, // Sneaker Cổ Thấp
-    { name: 'Vans Old Skool', categoryIdx: 9, gender: 'unisex', sport_type: 'lifestyle' }, // Sneaker Cổ Thấp
-    { name: 'Converse Chuck Taylor All Star', categoryIdx: 10, gender: 'unisex', sport_type: 'lifestyle' }, // Sneaker Cổ Cao
-    { name: 'New Balance 574', categoryIdx: 9, gender: 'unisex', sport_type: 'lifestyle' }, // Sneaker Cổ Thấp
-    { name: 'Air Jordan 1 Retro High', categoryIdx: 1, gender: 'unisex', sport_type: 'basketball' }, // Giày Bóng Rổ
-    { name: 'Under Armour Curry Flow 9', categoryIdx: 1, gender: 'male', sport_type: 'basketball' }, // Giày Bóng Rổ
+    { name: 'Puma Suede Classic', categoryIdx: 5, gender: 'unisex', sport_type: 'lifestyle' }, // Giày Sneaker Thể Thao
+    { name: 'Reebok Club C 85', categoryIdx: 5, gender: 'unisex', sport_type: 'lifestyle' }, // Giày Sneaker Thể Thao
+    { name: 'Vans Old Skool', categoryIdx: 5, gender: 'unisex', sport_type: 'lifestyle' }, // Giày Sneaker Thể Thao
+    { name: 'Converse Chuck Taylor', categoryIdx: 5, gender: 'unisex', sport_type: 'lifestyle' }, // Giày Sneaker Thể Thao
+    { name: 'New Balance 574', categoryIdx: 5, gender: 'unisex', sport_type: 'lifestyle' }, // Giày Sneaker Thể Thao
+    { name: 'Air Jordan 1 Retro', categoryIdx: 1, gender: 'unisex', sport_type: 'basketball' }, // Giày Bóng Rổ
+    { name: 'Under Armour Curry 9', categoryIdx: 1, gender: 'male', sport_type: 'basketball' }, // Giày Bóng Rổ
     { name: 'Asics Gel-Kayano 28', categoryIdx: 0, gender: 'unisex', sport_type: 'running' }, // Giày Chạy Bộ
-    { name: 'Balenciaga Triple S', categoryIdx: 9, gender: 'unisex', sport_type: 'lifestyle' }, // Sneaker Cổ Thấp
-    { name: 'Yeezy Boost 350 V2', categoryIdx: 9, gender: 'unisex', sport_type: 'lifestyle' }, // Sneaker Cổ Thấp
-    { name: 'Fila Disruptor II', categoryIdx: 9, gender: 'unisex', sport_type: 'lifestyle' }, // Sneaker Cổ Thấp
-    { name: 'Crocs Classic Clog', categoryIdx: 18, gender: 'unisex', sport_type: null }, // Dép Bánh Mì
-    { name: 'Skechers D\'Lites', categoryIdx: 3, gender: 'female', sport_type: 'training' }, // Giày Tập Luyện
     { name: 'Mizuno Wave Rider 25', categoryIdx: 0, gender: 'male', sport_type: 'running' }, // Giày Chạy Bộ
-    { name: 'Timberland 6-Inch Premium Boot', categoryIdx: 10, gender: 'male', sport_type: null }, // Sneaker Cổ Cao
-    { name: 'Dr. Martens 1460 8-Eye Boot', categoryIdx: 8, gender: 'unisex', sport_type: null }, // Chelsea Boot
-    { name: 'Supreme x Nike SB Dunk Low', categoryIdx: 9, gender: 'unisex', sport_type: 'lifestyle' }, // Sneaker Cổ Thấp
-    { name: 'Gucci Ace Sneaker', categoryIdx: 9, gender: 'unisex', sport_type: 'lifestyle' }, // Sneaker Cổ Thấp
-    { name: 'Prada Cloudbust Thunder', categoryIdx: 9, gender: 'unisex', sport_type: 'lifestyle' }, // Sneaker Cổ Thấp
-    { name: 'Alexander McQueen Oversized Sneaker', categoryIdx: 9, gender: 'unisex', sport_type: 'lifestyle' }, // Sneaker Cổ Thấp
-    { name: 'Off-White ODSY-1000', categoryIdx: 9, gender: 'unisex', sport_type: 'lifestyle' }, // Sneaker Cổ Thấp
     { name: 'Salomon Speedcross 5', categoryIdx: 0, gender: 'unisex', sport_type: 'running' }, // Giày Chạy Bộ
-    { name: 'Lacoste Carnaby Cool', categoryIdx: 9, gender: 'unisex', sport_type: 'lifestyle' } // Sneaker Cổ Thấp
+    { name: 'Skechers D\'Lites', categoryIdx: 3, gender: 'female', sport_type: 'training' }, // Giày Tập Luyện
+    { name: 'Nike Mercurial Superfly', categoryIdx: 2, gender: 'male', sport_type: 'football' }, // Giày Đá Bóng
+    { name: 'Adidas Predator Edge', categoryIdx: 2, gender: 'unisex', sport_type: 'football' }, // Giày Đá Bóng
+    { name: 'Vớ Nike Cushion Socks', categoryIdx: 6, gender: null, sport_type: null }, // Vớ & Tất Thể Thao
+    { name: 'Vớ Adidas Crew Socks', categoryIdx: 6, gender: null, sport_type: null }, // Vớ & Tất Thể Thao
+    { name: 'Lót Giày Phục Hồi', categoryIdx: 7, gender: null, sport_type: null }, // Lót Giày Thể Thao
+    { name: 'Dây Giày Co Giãn', categoryIdx: 8, gender: null, sport_type: null }, // Dây Giày Thể Thao
+    { name: 'Xịt Khử Mùi Cao Cấp', categoryIdx: 9, gender: null, sport_type: null }, // Chai Xịt Khử Mùi
+    { name: 'Dép Slide Nike Benassi', categoryIdx: 10, gender: 'unisex', sport_type: null }, // Dép Slide Thể Thao
+    { name: 'Dép Adilette Shower', categoryIdx: 10, gender: 'unisex', sport_type: null }, // Dép Slide Thể Thao
+    { name: 'Sandal Puma Evolve', categoryIdx: 11, gender: 'unisex', sport_type: null }, // Sandal Dã Ngoại
+    { name: 'Giày Tennis Asics Resolution', categoryIdx: 4, gender: 'unisex', sport_type: 'tennis' }, // Giày Tennis
+    { name: 'Nike Court Lite 2', categoryIdx: 4, gender: 'unisex', sport_type: 'tennis' } // Giày Tennis
   ];
   
   for (let i = 0; i < productData.length; i++) {
