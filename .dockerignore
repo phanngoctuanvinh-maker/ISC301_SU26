@@ -5,4 +5,5 @@ npm-debug.log
 .gitignore
 .vscode
 scratch
+tools/scratch
 uploads

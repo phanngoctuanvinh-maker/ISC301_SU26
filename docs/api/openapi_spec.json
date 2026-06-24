@@ -1,0 +1,2439 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Shoes Store API Specification",
+    "description": "Complete OpenAPI specification for the Shoes Store backend built with Node.js, Express, and MySQL. All endpoints include example data for easy testing.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Shoes Store API Support",
+      "email": "support@shoesstore.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local Development Server"
+    }
+  ],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Register a new account",
+        "description": "Creates a pending user registration and sends a six-digit OTP to the email address.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "full_name",
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "full_name": {
+                    "type": "string",
+                    "example": "John Smith",
+                    "minLength": 2,
+                    "maxLength": 100,
+                    "description": "Full name of the user (2-100 characters)"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "john.smith@gmail.com",
+                    "description": "Valid email address for account registration"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "Password123!@#",
+                    "description": "Password must contain uppercase, lowercase, and numbers. Minimum 8 characters."
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": "0987654321",
+                    "pattern": "^0\\d{9}$",
+                    "description": "Vietnamese phone number format (10 digits starting with 0)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resource created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Registration successful! Please check your email to verify your account."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string",
+                          "example": "john.smith@gmail.com"
+                        },
+                        "otp_sent": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Email is already in use"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/verify-otp": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Verify OTP",
+        "description": "Verifies a pending registration with the OTP sent by email and creates the user account.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "otp"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "john.smith@gmail.com",
+                    "description": "Email address used during registration"
+                  },
+                  "otp": {
+                    "type": "string",
+                    "example": "123456",
+                    "description": "Six-digit OTP code sent to email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request completed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "OTP verification successful! Account has been activated."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string",
+                          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTcwOTEyMzQ1NiwiZXhwIjoxNzA5NzI4MjU2fQ.abc123xyz"
+                        },
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "example": 2
+                            },
+                            "full_name": {
+                              "type": "string",
+                              "example": "John Smith"
+                            },
+                            "email": {
+                              "type": "string",
+                              "example": "john.smith@gmail.com"
+                            },
+                            "role": {
+                              "type": "string",
+                              "example": "customer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "OTP code is invalid or has expired"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/resend-otp": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Resend OTP",
+        "description": "Generates and sends a new OTP for a pending registration.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "john.smith@gmail.com",
+                    "description": "Email address to resend OTP"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request completed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "A new OTP code has been sent to your email"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "No registration request found for this email"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Log in with email and password",
+        "description": "Authenticates a user with email and password and returns a JWT.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "admin@gmail.com",
+                    "description": "Registered email address"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "AdminPassword123",
+                    "description": "Account password"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request completed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Login successful"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string",
+                          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTcwOTEyMzQ1NiwiZXhwIjoxNzA5NzI4MjU2fQ.sample_jwt_token_here",
+                          "description": "JWT token for authentication (valid for 7 days)"
+                        },
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "example": 1
+                            },
+                            "full_name": {
+                              "type": "string",
+                              "example": "Admin Store"
+                            },
+                            "email": {
+                              "type": "string",
+                              "example": "admin@gmail.com"
+                            },
+                            "role": {
+                              "type": "string",
+                              "example": "admin",
+                              "enum": ["admin", "customer"]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required or invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Incorrect email or password"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/google": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Log in with Google",
+        "description": "Authenticates or links a user with a Google ID token and returns a JWT.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "credential"
+                ],
+                "properties": {
+                  "credential": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjZmNzI1NDEwMWY1NmU0MWNmMzVjOTkyNmRlODRhMmQ1NTJiNGM2ZjEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiJZT1VSX0NMSUVOVF9JRC5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsImF1ZCI6IllPVVJfQ0xJRU5UX0lELmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTIzNDU2Nzg5MDEyMzQ1Njc4OTAiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwibmFtZSI6IlRlc3QgVXNlciIsInBpY3R1cmUiOiJodHRwczovL2V4YW1wbGUuY29tL3Bob3RvLmpwZyIsImdpdmVuX25hbWUiOiJUZXN0IiwiZmFtaWx5X25hbWUiOiJVc2VyIiwiaWF0IjoxNzA5MTIzNDU2LCJleHAiOjE3MDkxMjcwNTZ9.sample_google_id_token",
+                    "description": "Google ID Token obtained from Google Sign-In"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request completed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Google login successful"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string",
+                          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsInJvbGUiOiJjdXN0b21lciIsImlhdCI6MTcwOTEyMzQ1NiwiZXhwIjoxNzA5NzI4MjU2fQ.sample_jwt_token"
+                        },
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "example": 3
+                            },
+                            "full_name": {
+                              "type": "string",
+                              "example": "Test User"
+                            },
+                            "email": {
+                              "type": "string",
+                              "example": "user@example.com"
+                            },
+                            "role": {
+                              "type": "string",
+                              "example": "customer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/profile": {
+      "get": {
+        "tags": [
+          "Profile"
+        ],
+        "summary": "Get current profile",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Profile retrieved successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 2
+                        },
+                        "full_name": {
+                          "type": "string",
+                          "example": "John Smith"
+                        },
+                        "email": {
+                          "type": "string",
+                          "example": "john.smith@gmail.com"
+                        },
+                        "phone": {
+                          "type": "string",
+                          "example": "0987654321"
+                        },
+                        "address": {
+                          "type": "string",
+                          "example": "123 Main Street, District 1"
+                        },
+                        "gender": {
+                          "type": "string",
+                          "example": "nam"
+                        },
+                        "dob": {
+                          "type": "string",
+                          "example": "1995-10-15"
+                        },
+                        "avatar_url": {
+                          "type": "string",
+                          "example": "http://localhost:8080/uploads/avatars/user_2.jpg"
+                        },
+                        "role": {
+                          "type": "string",
+                          "example": "customer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Returns the authenticated user profile."
+      },
+      "put": {
+        "tags": [
+          "Profile"
+        ],
+        "summary": "Update current profile",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "full_name": {
+                    "type": "string",
+                    "example": "Jane Doe",
+                    "description": "Full name (2-100 characters)"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": "0912345678",
+                    "description": "Vietnamese phone number (10 digits starting with 0)"
+                  },
+                  "address": {
+                    "type": "string",
+                    "example": "123 Main Street, Downtown, District 1",
+                    "description": "Full address"
+                  },
+                  "gender": {
+                    "type": "string",
+                    "enum": [
+                      "nam",
+                      "nu",
+                      "khac"
+                    ],
+                    "example": "nam"
+                  },
+                  "dob": {
+                    "type": "string",
+                    "format": "date",
+                    "example": "1995-10-15"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        },
+        "description": "Updates profile fields for the authenticated user."
+      }
+    },
+    "/api/profile/change-password": {
+      "put": {
+        "tags": [
+          "Profile"
+        ],
+        "summary": "Change password",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "old_password",
+                  "new_password"
+                ],
+                "properties": {
+                  "old_password": {
+                    "type": "string",
+                    "example": "Password123!@#",
+                    "description": "Current password"
+                  },
+                  "new_password": {
+                    "type": "string",
+                    "example": "NewPassword456!@#",
+                    "description": "New password (must contain uppercase, lowercase, numbers)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          },
+          "400": {
+            "description": "Invalid request data."
+          }
+        },
+        "description": "Changes the authenticated user password after validating the current password."
+      }
+    },
+    "/api/profile/avatar": {
+      "put": {
+        "tags": [
+          "Profile"
+        ],
+        "summary": "Update avatar",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "avatar"
+                ],
+                "properties": {
+                  "avatar": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "See schema constraints."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        },
+        "description": "Uploads and stores a new avatar for the authenticated user."
+      }
+    },
+    "/api/admin/categories": {
+      "get": {
+        "tags": [
+          "Admin Category"
+        ],
+        "summary": "List admin categories",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        },
+        "description": "Returns the category tree for admin management."
+      },
+      "post": {
+        "tags": [
+          "Admin Category"
+        ],
+        "summary": "Create category",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Men's Athletic Shoes",
+                    "description": "Category name"
+                  },
+                  "parent_id": {
+                    "type": "string",
+                    "example": "1",
+                    "description": "Parent category ID (optional, for subcategories)"
+                  },
+                  "sort_order": {
+                    "type": "string",
+                    "example": "1",
+                    "description": "Display order (integer)"
+                  },
+                  "image": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "See schema constraints."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resource created successfully."
+          }
+        },
+        "description": "Creates a new category or child category."
+      }
+    },
+    "/api/admin/categories/{id}": {
+      "put": {
+        "tags": [
+          "Admin Category"
+        ],
+        "summary": "Update category",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 3
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Men's Running Shoes",
+                    "description": "Updated category name"
+                  },
+                  "parent_id": {
+                    "type": "string",
+                    "example": "1",
+                    "description": "New parent category ID (optional)"
+                  },
+                  "sort_order": {
+                    "type": "string",
+                    "example": "5",
+                    "description": "Updated display order"
+                  },
+                  "image": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "See schema constraints."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        },
+        "description": "Updates a category by ID."
+      }
+    },
+    "/api/admin/categories/{id}/toggle-status": {
+      "put": {
+        "tags": [
+          "Admin Category"
+        ],
+        "summary": "Toggle category status",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        },
+        "description": "Toggles a category active status."
+      }
+    },
+    "/api/admin/categories/reorder": {
+      "put": {
+        "tags": [
+          "Admin Category"
+        ],
+        "summary": "Reorder categories",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "items"
+                ],
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "sort_order"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "sort_order": {
+                          "type": "integer",
+                          "example": 10
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        },
+        "description": "Updates category sort order in bulk."
+      }
+    },
+    "/api/admin/brands": {
+      "get": {
+        "tags": [
+          "Admin Brand"
+        ],
+        "summary": "List admin brands",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        },
+        "description": "Returns all brands for admin management."
+      },
+      "post": {
+        "tags": [
+          "Admin Brand"
+        ],
+        "summary": "Create brand",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Nike",
+                    "description": "Brand name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "Leading sports footwear and apparel brand",
+                    "description": "Brand description (optional)"
+                  },
+                  "logo": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "See schema constraints."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resource created successfully."
+          }
+        },
+        "description": "Creates a new brand."
+      }
+    },
+    "/api/admin/brands/{id}": {
+      "put": {
+        "tags": [
+          "Admin Brand"
+        ],
+        "summary": "Update brand",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Nike Sportswear",
+                    "description": "Updated brand name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "Premium athletic footwear and lifestyle products",
+                    "description": "Updated brand description"
+                  },
+                  "logo": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "See schema constraints."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        },
+        "description": "Updates a brand by ID."
+      }
+    },
+    "/api/admin/brands/{id}/toggle-status": {
+      "put": {
+        "tags": [
+          "Admin Brand"
+        ],
+        "summary": "Toggle brand status",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        },
+        "description": "Toggles a brand active status."
+      }
+    },
+    "/api/addresses": {
+      "get": {
+        "tags": [
+          "Addresses"
+        ],
+        "summary": "List addresses",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "example"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "example": 1
+                          },
+                          "user_id": {
+                            "type": "integer",
+                            "example": 2
+                          },
+                          "receiver_name": {
+                            "type": "string",
+                            "example": "example"
+                          },
+                          "phone": {
+                            "type": "string",
+                            "example": "0987654321"
+                          },
+                          "address_line": {
+                            "type": "string",
+                            "example": "example"
+                          },
+                          "ward": {
+                            "type": "string",
+                            "example": "example"
+                          },
+                          "district": {
+                            "type": "string",
+                            "example": "example"
+                          },
+                          "city": {
+                            "type": "string",
+                            "example": "example"
+                          },
+                          "is_default": {
+                            "type": "boolean",
+                            "example": true
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "updated_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Returns shipping addresses for the authenticated user."
+      },
+      "post": {
+        "tags": [
+          "Addresses"
+        ],
+        "summary": "Create address",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "receiver_name",
+                  "phone",
+                  "address_line",
+                  "district",
+                  "city"
+                ],
+                "properties": {
+                  "receiver_name": {
+                    "type": "string",
+                    "example": "Emily Wilson",
+                    "minLength": 2,
+                    "maxLength": 100,
+                    "description": "Name of the person receiving the delivery"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": "0987654321",
+                    "pattern": "^0\\d{9}$",
+                    "description": "Contact phone number (10 digits starting with 0)"
+                  },
+                  "address_line": {
+                    "type": "string",
+                    "example": "456 Park Avenue",
+                    "minLength": 5,
+                    "maxLength": 255,
+                    "description": "Street address"
+                  },
+                  "ward": {
+                    "type": "string",
+                    "example": "Ben Nghe Ward",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Ward/Commune (optional)"
+                  },
+                  "district": {
+                    "type": "string",
+                    "example": "District 1",
+                    "maxLength": 100,
+                    "description": "District"
+                  },
+                  "city": {
+                    "type": "string",
+                    "example": "Ho Chi Minh City",
+                    "maxLength": 100,
+                    "description": "City/Province"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resource created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "example"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Creates a new shipping address for the authenticated user."
+      }
+    },
+    "/api/addresses/{id}": {
+      "put": {
+        "tags": [
+          "Addresses"
+        ],
+        "summary": "Update address",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "receiver_name": {
+                    "type": "string",
+                    "example": "Michael Chen",
+                    "minLength": 2,
+                    "maxLength": 100,
+                    "description": "Updated receiver name"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": "0912345678",
+                    "pattern": "^0\\d{9}$",
+                    "description": "Updated contact phone"
+                  },
+                  "address_line": {
+                    "type": "string",
+                    "example": "789 Oak Street",
+                    "minLength": 5,
+                    "maxLength": 255,
+                    "description": "Updated street address"
+                  },
+                  "ward": {
+                    "type": "string",
+                    "example": "Ward 6",
+                    "maxLength": 100,
+                    "nullable": true,
+                    "description": "Updated ward (optional)"
+                  },
+                  "district": {
+                    "type": "string",
+                    "example": "District 3",
+                    "maxLength": 100,
+                    "description": "Updated district"
+                  },
+                  "city": {
+                    "type": "string",
+                    "example": "Ho Chi Minh City",
+                    "maxLength": 100,
+                    "description": "Updated city"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          },
+          "400": {
+            "description": "Invalid request data."
+          },
+          "403": {
+            "description": "The authenticated user is not allowed to access this resource."
+          },
+          "404": {
+            "description": "The requested resource was not found."
+          }
+        },
+        "description": "Updates one shipping address owned by the authenticated user."
+      },
+      "delete": {
+        "tags": [
+          "Addresses"
+        ],
+        "summary": "Delete address",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          },
+          "403": {
+            "description": "The authenticated user is not allowed to access this resource."
+          },
+          "404": {
+            "description": "The requested resource was not found."
+          }
+        },
+        "description": "Deletes one shipping address owned by the authenticated user."
+      }
+    },
+    "/api/addresses/{id}/default": {
+      "put": {
+        "tags": [
+          "Addresses"
+        ],
+        "summary": "Set default address",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          },
+          "403": {
+            "description": "The authenticated user is not allowed to access this resource."
+          },
+          "404": {
+            "description": "The requested resource was not found."
+          }
+        },
+        "description": "Sets one shipping address as the authenticated user default address."
+      }
+    },
+    "/api/products": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "List public products",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 12,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "category_slug",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "brand_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "gender",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "male",
+                "female",
+                "unisex"
+              ]
+            }
+          },
+          {
+            "name": "sport_type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "featured",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "newest",
+                "popular",
+                "name_asc",
+                "name_desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        },
+        "description": "Returns active products with filtering and pagination."
+      }
+    },
+    "/api/products/{slug}": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Get public product detail",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          },
+          "404": {
+            "description": "The requested resource was not found."
+          }
+        },
+        "description": "Returns one active product by slug."
+      }
+    },
+    "/api/categories": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "List public categories",
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        },
+        "description": "Returns active categories for the public catalog."
+      }
+    },
+    "/api/brands": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "List public brands",
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        },
+        "description": "Returns active brands for the public catalog."
+      }
+    },
+    "/api/admin/products": {
+      "get": {
+        "tags": [
+          "Admin Products"
+        ],
+        "summary": "List admin products",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        },
+        "description": "Returns products for admin management with filtering and pagination."
+      },
+      "post": {
+        "tags": [
+          "Admin Products"
+        ],
+        "summary": "Create product",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "category_id",
+                  "brand_id",
+                  "name"
+                ],
+                "properties": {
+                  "category_id": {
+                    "type": "integer",
+                    "example": 2,
+                    "description": "Category ID (must exist)"
+                  },
+                  "brand_id": {
+                    "type": "integer",
+                    "example": 1,
+                    "description": "Brand ID (must exist)"
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "Nike Air Zoom Pegasus 40",
+                    "description": "Product name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "High-performance running shoes with Zoom Air cushioning, suitable for runners of all distances",
+                    "description": "Product description (optional)"
+                  },
+                  "gender": {
+                    "type": "string",
+                    "enum": [
+                      "male",
+                      "female",
+                      "unisex"
+                    ],
+                    "example": "male",
+                    "description": "Target gender"
+                  },
+                  "sport_type": {
+                    "type": "string",
+                    "example": "running",
+                    "description": "Sport/Activity type (optional)"
+                  },
+                  "is_featured": {
+                    "type": "boolean",
+                    "example": true,
+                    "description": "Featured product flag"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "category_id",
+                  "brand_id",
+                  "name"
+                ],
+                "properties": {
+                  "category_id": {
+                    "type": "integer",
+                    "example": 2,
+                    "description": "Category ID"
+                  },
+                  "brand_id": {
+                    "type": "integer",
+                    "example": 1,
+                    "description": "Brand ID"
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "Adidas Ultraboost 23",
+                    "description": "Product name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "Running shoes with Boost technology for soft cushioning and excellent energy return",
+                    "description": "Product description"
+                  },
+                  "gender": {
+                    "type": "string",
+                    "enum": [
+                      "male",
+                      "female",
+                      "unisex"
+                    ],
+                    "example": "female",
+                    "description": "Target gender"
+                  },
+                  "sport_type": {
+                    "type": "string",
+                    "example": "running",
+                    "description": "Sport type"
+                  },
+                  "is_featured": {
+                    "type": "boolean",
+                    "example": false,
+                    "description": "Featured status"
+                  },
+                  "image": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Product image file (JPEG/PNG, max 5MB)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resource created successfully."
+          },
+          "400": {
+            "description": "Invalid request data."
+          },
+          "403": {
+            "description": "The authenticated user is not allowed to access this resource."
+          }
+        },
+        "description": "Creates a new product."
+      }
+    },
+    "/api/admin/products/{id}": {
+      "put": {
+        "tags": [
+          "Admin Products"
+        ],
+        "summary": "Update product",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          },
+          "404": {
+            "description": "The requested resource was not found."
+          }
+        },
+        "description": "Updates a product by ID."
+      }
+    },
+    "/api/admin/products/{id}/toggle-status": {
+      "put": {
+        "tags": [
+          "Admin Products"
+        ],
+        "summary": "Toggle product status",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          },
+          "404": {
+            "description": "The requested resource was not found."
+          }
+        },
+        "description": "Toggles a product active status."
+      }
+    },
+    "/api/admin/products/{id}/variants": {
+      "put": {
+        "tags": [
+          "Admin Products"
+        ],
+        "summary": "Replace or update product variants",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "variants"
+                ],
+                "properties": {
+                  "variants": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "size",
+                        "stock_quantity"
+                      ],
+                      "properties": {
+                        "sku": {
+                          "type": "string",
+                          "example": "NK-PEG40-BLK-40",
+                          "description": "Stock Keeping Unit (optional, auto-generated if not provided)"
+                        },
+                        "size": {
+                          "type": "string",
+                          "example": "40",
+                          "description": "Shoe size (e.g., 38, 39, 40, 41, 42)"
+                        },
+                        "stock_quantity": {
+                          "type": "integer",
+                          "example": 50,
+                          "description": "Available stock quantity"
+                        },
+                        "low_stock_threshold": {
+                          "type": "integer",
+                          "example": 5,
+                          "description": "Alert when stock falls below this number"
+                        },
+                        "is_active": {
+                          "type": "boolean",
+                          "example": true,
+                          "description": "Variant active status"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        }
+      }
+    },
+    "/api/cart": {
+      "get": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Get current cart",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Clear current cart",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        }
+      }
+    },
+    "/api/cart/items": {
+      "post": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Add item to cart",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "variant_id",
+                  "quantity"
+                ],
+                "properties": {
+                  "variant_id": {
+                    "type": "integer",
+                    "example": 15,
+                    "description": "Product variant ID (size-specific product)"
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "example": 2,
+                    "minimum": 1,
+                    "description": "Quantity to add to cart"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resource created successfully."
+          }
+        }
+      }
+    },
+    "/api/cart/items/{id}": {
+      "put": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Update cart item quantity",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "quantity"
+                ],
+                "properties": {
+                  "quantity": {
+                    "type": "integer",
+                    "example": 3,
+                    "minimum": 1,
+                    "description": "Updated quantity"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Cart"
+        ],
+        "summary": "Remove item from cart",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        }
+      }
+    },
+    "/api/orders/checkout": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Checkout current cart",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "address_id"
+                ],
+                "properties": {
+                  "address_id": {
+                    "type": "integer",
+                    "example": 1,
+                    "description": "Shipping address ID (must be owned by current user)"
+                  },
+                  "payment_method": {
+                    "type": "string",
+                    "enum": [
+                      "cod",
+                      "vnpay"
+                    ],
+                    "example": "cod",
+                    "description": "Payment method: cod (Cash on Delivery) or vnpay (VNPay gateway)"
+                  },
+                  "note": {
+                    "type": "string",
+                    "example": "Please call before delivery",
+                    "description": "Delivery note (optional)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resource created successfully."
+          }
+        }
+      }
+    },
+    "/api/orders": {
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "List customer orders",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        }
+      }
+    },
+    "/api/orders/{id}": {
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Get customer order detail",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        }
+      }
+    },
+    "/api/orders/{id}/cancel": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Cancel customer order",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        }
+      }
+    },
+    "/api/orders/vnpay/return": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "Handle VNPAY return callback",
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        }
+      }
+    },
+    "/api/admin/inventory": {
+      "get": {
+        "tags": [
+          "Admin Inventory"
+        ],
+        "summary": "List product variant inventory",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "low_stock",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        }
+      }
+    },
+    "/api/admin/inventory/adjustments": {
+      "post": {
+        "tags": [
+          "Admin Inventory"
+        ],
+        "summary": "Adjust inventory manually",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "variant_id",
+                  "type",
+                  "quantity"
+                ],
+                "properties": {
+                  "variant_id": {
+                    "type": "integer",
+                    "example": 25,
+                    "description": "Product variant ID to adjust"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "in",
+                      "out",
+                      "adjustment"
+                    ],
+                    "example": "in",
+                    "description": "Adjustment type: in (stock in), out (stock out), adjustment (correction)"
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "example": 100,
+                    "minimum": 1,
+                    "description": "Quantity to adjust"
+                  },
+                  "note": {
+                    "type": "string",
+                    "example": "Stock received from Nike supplier",
+                    "description": "Reason for adjustment (optional)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        }
+      }
+    },
+    "/api/admin/orders": {
+      "get": {
+        "tags": [
+          "Admin Orders"
+        ],
+        "summary": "List all orders",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        }
+      }
+    },
+    "/api/admin/orders/{id}": {
+      "get": {
+        "tags": [
+          "Admin Orders"
+        ],
+        "summary": "Get admin order detail",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        }
+      }
+    },
+    "/api/admin/orders/{id}/status": {
+      "put": {
+        "tags": [
+          "Admin Orders"
+        ],
+        "summary": "Update order status",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "confirmed",
+                      "shipping",
+                      "completed",
+                      "cancelled"
+                    ],
+                    "example": "confirmed",
+                    "description": "New order status"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        }
+      }
+    },
+    "/api/admin/orders/{id}/payment-status": {
+      "put": {
+        "tags": [
+          "Admin Orders"
+        ],
+        "summary": "Update order payment status",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "payment_status"
+                ],
+                "properties": {
+                  "payment_status": {
+                    "type": "string",
+                    "enum": [
+                      "unpaid",
+                      "pending",
+                      "paid",
+                      "failed",
+                      "refunded"
+                    ],
+                    "example": "paid",
+                    "description": "New payment status"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request completed successfully."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

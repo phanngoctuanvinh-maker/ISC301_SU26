@@ -2,10 +2,11 @@ FROM node:20-bookworm-slim
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY backend/package*.json ./
 RUN npm ci --omit=dev
 
-COPY . .
+COPY backend ./
+COPY docs ./docs
 
 RUN mkdir -p uploads/avatars uploads/categories uploads/brands \
   && chown -R node:node /app
@@ -16,4 +17,4 @@ USER node
 
 EXPOSE 8080
 
-CMD ["npm", "start"]
+CMD ["node", "server.js"]
