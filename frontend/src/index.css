@@ -231,20 +231,114 @@ a:hover {
 /* Navbar */
 .navbar {
   background: linear-gradient(135deg,
-    hsla(262, 83%, 97%, 0.97) 0%,
-    hsla(220, 60%, 96%, 0.97) 50%,
-    hsla(187, 92%, 96%, 0.97) 100%
-  );
+    hsl(262, 40%, 20%) 0%,
+    hsl(220, 35%, 18%) 50%,
+    hsl(187, 40%, 16%) 100%
+  ) !important;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 3px solid transparent;
   border-image: linear-gradient(90deg, var(--primary), var(--accent)) 1;
-  border-bottom: 1px solid hsla(262, 60%, 85%, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
   position: sticky;
   top: 0;
   z-index: 100;
-  padding: 0.9rem 0;
-  box-shadow: 0 4px 24px hsla(262, 83%, 58%, 0.08);
+  padding: 1.3rem 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Navbar Link Styles */
+.navbar .nav-link {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.navbar .nav-link:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Navbar Cart Button Styles */
+.navbar .cart-nav-btn {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.navbar .cart-nav-btn:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+/* Navbar Welcome text */
+.navbar .user-menu > span {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.navbar .user-menu > span strong {
+  color: #ffffff !important;
+}
+
+/* Category Trigger in Navbar context */
+.navbar .nav-category-trigger-btn {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  white-space: nowrap !important;
+}
+
+.navbar .nav-category-trigger-btn:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--accent) !important;
+  color: #ffffff !important;
+}
+
+.navbar .nav-category-trigger-btn.active {
+  background: linear-gradient(135deg, var(--primary), var(--accent)) !important;
+  color: white !important;
+  border-color: transparent !important;
+}
+
+/* Portal Search Form in Navbar context */
+.navbar .filter-search-form {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: none !important;
+}
+
+.navbar .filter-search-form:focus-within {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(187, 92, 46, 0.25) !important;
+}
+
+.navbar .filter-search-input {
+  color: #ffffff !important;
+}
+
+.navbar .filter-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.navbar .filter-search-icon {
+  color: var(--accent) !important;
+}
+
+.navbar .filter-search-clear {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.navbar .filter-search-clear:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Footer link styles to override inline styles on dark background */
+footer a:not(.logo-text) {
+  color: rgba(255, 255, 255, 0.8) !important;
+  transition: color var(--transition-fast) !important;
+}
+
+footer a:not(.logo-text):hover {
+  color: var(--accent) !important;
+  text-decoration: underline !important;
 }
 
 .logo-text {
@@ -685,5 +779,69 @@ a:hover {
 .cart-checkout-btn:hover {
   filter: brightness(1.1);
   box-shadow: 0 4px 15px hsla(187, 92%, 46%, 0.4);
+}
+
+/* ─── Navbar User Dropdown Menu ─── */
+.navbar .nav-user-dropdown-trigger {
+  box-shadow: var(--shadow-sm);
+}
+
+.navbar .nav-user-dropdown-trigger:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--accent) !important;
+}
+
+.nav-user-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+  animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.nav-dropdown-item {
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.85rem;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary) !important;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 550;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.nav-dropdown-item:hover {
+  background-color: hsla(262, 83%, 58%, 0.06);
+  color: var(--primary) !important;
+}
+
+.nav-dropdown-item.logout {
+  color: var(--danger) !important;
+}
+
+.nav-dropdown-item.logout:hover {
+  background-color: hsla(350, 89%, 55%, 0.08);
+  color: var(--danger) !important;
 }
 

@@ -4,10 +4,10 @@ import { Link } from 'react-router-dom';
 function Footer() {
   return (
     <footer style={{ 
-      backgroundColor: 'var(--bg-secondary)', 
+      backgroundColor: 'hsl(220, 35%, 15%)', 
       borderTop: '3px solid transparent',
       borderImage: 'linear-gradient(90deg, hsl(262, 83%, 58%), hsl(187, 92%, 46%)) 1',
-      backgroundImage: 'radial-gradient(at 100% 0%, hsla(262, 83%, 58%, 0.04) 0px, transparent 50%), radial-gradient(at 0% 100%, hsla(187, 92%, 46%, 0.04) 0px, transparent 50%)',
+      backgroundImage: 'linear-gradient(135deg, hsl(262, 35%, 18%) 0%, hsl(220, 35%, 15%) 50%, hsl(187, 35%, 13%) 100%)',
       padding: '4rem 1.5rem 2rem 1.5rem',
       marginTop: 'auto'
     }}>
@@ -24,10 +24,10 @@ function Footer() {
               WebkitTextFillColor: 'transparent',
               display: 'inline-block',
               marginBottom: '1rem'
-            }}>
+            }} className="logo-text">
               SHOES STORE
             </Link>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '1.5rem' }}>
+            <p style={{ color: 'rgba(255, 255, 255, 0.75)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '1.5rem' }}>
               Chúng tôi cung cấp các sản phẩm giày thể thao và phụ kiện chính hãng từ các thương hiệu hàng đầu thế giới như Nike, Adidas, Puma, Jordan... nâng niu từng bước chân của bạn.
             </p>
             <div style={{ display: 'flex', gap: '1rem' }}>
@@ -40,7 +40,7 @@ function Footer() {
 
           {/* Column 2: Quick Links */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <h4 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <h4 style={{ fontSize: '1.1rem', color: '#ffffff', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Danh mục nổi bật
             </h4>
             <Link to="/" style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Giày Chạy Bộ</Link>
@@ -51,16 +51,16 @@ function Footer() {
 
           {/* Column 3: Contact & Address */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <h4 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <h4 style={{ fontSize: '1.1rem', color: '#ffffff', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Thông tin liên hệ
             </h4>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <p style={{ color: 'rgba(255, 255, 255, 0.75)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               📍 123 Đường Lê Lợi, Bến Thành, Quận 1, TP. HCM
             </p>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <p style={{ color: 'rgba(255, 255, 255, 0.75)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               📞 Hotline: 090 123 4567
             </p>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <p style={{ color: 'rgba(255, 255, 255, 0.75)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               ✉ Email: support@shoesstore.com
             </p>
           </div>
@@ -69,14 +69,14 @@ function Footer() {
 
         {/* Bottom copyright section */}
         <div style={{ 
-          borderTop: '1px solid var(--glass-border)', 
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)', 
           paddingTop: '2rem', 
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: '1rem',
-          color: 'var(--text-muted)',
+          color: 'rgba(255, 255, 255, 0.55)',
           fontSize: '0.9rem'
         }}>
           <p>© {new Date().getFullYear()} Shoes Store. Bảo lưu mọi quyền.</p>

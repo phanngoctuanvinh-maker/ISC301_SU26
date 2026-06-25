@@ -87,6 +87,7 @@ CREATE TABLE `addresses` (
   `ward` varchar(100) DEFAULT NULL,
   `district` varchar(100) NOT NULL,
   `city` varchar(100) NOT NULL,
+  `address_type` varchar(50) DEFAULT 'Nhà',
   `is_default` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `fk_addresses_user` (`user_id`),

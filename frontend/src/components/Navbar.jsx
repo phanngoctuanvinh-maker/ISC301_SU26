@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
@@ -9,6 +9,18 @@ function Navbar() {
 
   const [cart, setCart] = useState({ items: [], summary: { total_items: 0, subtotal: 0 } });
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const userDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   let user = null;
   if (userString) {
@@ -92,10 +104,13 @@ function Navbar() {
       <nav className="navbar">
         <div className="container flex justify-between items-center">
           <div className="flex items-center" style={{ gap: '2rem' }}>
+            <div id="navbar-category-portal"></div>
             <Link to="/" className="logo-text">
               SHOES STORE
             </Link>
           </div>
+          
+          <div id="navbar-search-portal" style={{ flex: 1, display: 'flex', justifyContent: 'center', margin: '0 2rem' }}></div>
           
           <div className="user-menu">
             {token ? (
@@ -108,21 +123,84 @@ function Navbar() {
                   )}
                 </button>
 
-                {user?.role === 'admin' && (
-                  <Link to="/admin" className="nav-link" style={{ fontWeight: 700, color: 'var(--accent)' }}>
-                    ⚙️ Quản trị
-                  </Link>
-                )}
-                <Link to="/wishlist" className="nav-link">❤️ Yêu thích</Link>
-                <Link to="/addresses" className="nav-link">📍 Địa chỉ</Link>
-                <Link to="/profile" className="nav-link">👤 Cá nhân</Link>
+                {/* Dropdown Menu Container */}
+                <div style={{ position: 'relative' }} ref={userDropdownRef}>
+                  <button 
+                    onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                    className="nav-user-dropdown-trigger"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      color: '#ffffff',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      fontFamily: 'inherit',
+                      fontSize: '0.85rem',
+                      fontWeight: '600',
+                      whiteSpace: 'nowrap',
+                      outline: 'none',
+                      transition: 'all var(--transition-fast)'
+                    }}
+                  >
+                    👤 Chào, {user?.full_name?.split(' ').pop() || 'Thành viên'}
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ transform: isUserDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', marginLeft: '2px' }}>
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </button>
 
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', padding: '0 0.25rem' }}>
-                  Chào, <strong style={{ color: 'var(--text-primary)' }}>{user?.full_name?.split(' ').pop() || 'User'}</strong>
-                </span>
-                <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem', borderColor: 'hsla(262, 60%, 80%, 0.4)' }}>
-                  Đăng xuất
-                </button>
+                  {isUserDropdownOpen && (
+                    <div className="nav-user-dropdown-menu">
+                      {user?.role === 'admin' && (
+                        <Link 
+                          to="/admin" 
+                          className="nav-dropdown-item" 
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          style={{
+                            fontWeight: '700',
+                            color: 'var(--primary)'
+                          }}
+                        >
+                          ⚙️ Quản trị
+                        </Link>
+                      )}
+                      <Link 
+                        to="/profile" 
+                        className="nav-dropdown-item" 
+                        onClick={() => setIsUserDropdownOpen(false)}
+                      >
+                        👤 Cá nhân
+                      </Link>
+                      <Link 
+                        to="/addresses" 
+                        className="nav-dropdown-item" 
+                        onClick={() => setIsUserDropdownOpen(false)}
+                      >
+                        📍 Địa chỉ
+                      </Link>
+                      <Link 
+                        to="/wishlist" 
+                        className="nav-dropdown-item" 
+                        onClick={() => setIsUserDropdownOpen(false)}
+                      >
+                        ❤️ Yêu thích
+                      </Link>
+                      <div style={{ height: '1px', backgroundColor: 'var(--glass-border)', margin: '0.4rem 0' }}></div>
+                      <button 
+                        onClick={() => {
+                          setIsUserDropdownOpen(false);
+                          handleLogout();
+                        }} 
+                        className="nav-dropdown-item logout"
+                      >
+                        🚪 Đăng xuất
+                      </button>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <>

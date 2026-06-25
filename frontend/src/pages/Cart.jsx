@@ -12,6 +12,14 @@ function Cart() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Checkout states
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutNote, setCheckoutNote] = useState('');
+
   useEffect(() => {
     if (!token) {
       setError('Vui lòng đăng nhập để xem giỏ hàng của bạn.');
@@ -20,7 +28,23 @@ function Cart() {
       return;
     }
     fetchCart();
+    fetchAddresses();
   }, [token]);
+
+  const fetchAddresses = async () => {
+    try {
+      const res = await api.get('/addresses');
+      setAddresses(res.data || []);
+      const defaultAddr = res.data?.find(a => a.is_default);
+      if (defaultAddr) {
+        setSelectedAddressId(defaultAddr.id);
+      } else if (res.data?.length > 0) {
+        setSelectedAddressId(res.data[0].id);
+      }
+    } catch (err) {
+      console.error('Lỗi tải địa chỉ:', err);
+    }
+  };
 
   const fetchCart = async () => {
     try {
@@ -111,7 +135,37 @@ function Cart() {
   };
 
   const handleCheckout = () => {
-    alert('Đang xử lý đơn hàng... Chuyển tới cổng thanh toán.');
+    navigate('/checkout');
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!selectedAddressId) {
+      setError('Vui lòng chọn địa chỉ nhận hàng');
+      return;
+    }
+    try {
+      setCheckoutLoading(true);
+      const res = await api.post('/orders/checkout', {
+        address_id: selectedAddressId,
+        payment_method: paymentMethod,
+        note: checkoutNote
+      });
+      setShowCheckoutModal(false);
+      setCart({ items: [], summary: { total_items: 0, subtotal: 0 } });
+      window.dispatchEvent(new Event('cart-updated'));
+      
+      if (res.data?.payment?.payment_url) {
+        window.location.href = res.data.payment.payment_url;
+      } else {
+        alert('Đặt hàng thành công!');
+        navigate('/profile');
+      }
+    } catch (err) {
+      setError(err.message || 'Lỗi đặt hàng');
+      setTimeout(() => setError(''), 4000);
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   if (loading) {
@@ -270,6 +324,73 @@ function Cart() {
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* Checkout Modal */}
+      {showCheckoutModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '600px', padding: '2rem', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem' }}>Xác nhận Đơn Hàng</h2>
+            
+            <div className="form-group">
+              <label className="form-label" style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Địa chỉ nhận hàng (Tự động điền)</label>
+              {addresses.map(addr => (
+                <div 
+                  key={addr.id} 
+                  style={{ 
+                    border: selectedAddressId === addr.id ? '2px solid var(--accent)' : '1px solid var(--glass-border)', 
+                    backgroundColor: selectedAddressId === addr.id ? 'rgba(255, 107, 107, 0.05)' : 'transparent',
+                    padding: '1rem', 
+                    borderRadius: '8px', 
+                    marginBottom: '0.75rem', 
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }} 
+                  onClick={() => setSelectedAddressId(addr.id)}
+                >
+                  <div className="flex justify-between items-center">
+                    <strong>{addr.receiver_name} - {addr.phone}</strong>
+                    {addr.address_type && <span className="badge badge-secondary" style={{ fontSize: '0.75rem' }}>{addr.address_type}</span>}
+                  </div>
+                  <p style={{ margin: '0.5rem 0 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                    {addr.address_line}{addr.ward ? `, ${addr.ward}` : ''}, {addr.district}, {addr.city}
+                  </p>
+                </div>
+              ))}
+              <Link to="/addresses" style={{ display: 'inline-block', marginTop: '0.5rem', color: 'var(--accent)', fontSize: '0.9rem', textDecoration: 'underline' }}>
+                + Quản lý Sổ địa chỉ
+              </Link>
+            </div>
+
+            <div className="form-group" style={{ marginTop: '1.5rem' }}>
+              <label className="form-label">Phương thức thanh toán</label>
+              <select className="form-control" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                <option value="cod">Thanh toán khi nhận hàng (COD)</option>
+                <option value="vnpay">Thanh toán qua VNPAY</option>
+              </select>
+            </div>
+
+            <div className="form-group" style={{ marginTop: '1.5rem' }}>
+              <label className="form-label">Ghi chú (tùy chọn)</label>
+              <input 
+                type="text" 
+                className="form-control" 
+                value={checkoutNote} 
+                onChange={(e) => setCheckoutNote(e.target.value)} 
+                placeholder="Ghi chú cho đơn vị vận chuyển..." 
+              />
+            </div>
+
+            <div className="flex gap-4" style={{ marginTop: '2rem' }}>
+              <button className="btn btn-primary" style={{ flex: 1, padding: '1rem' }} onClick={handlePlaceOrder} disabled={checkoutLoading}>
+                {checkoutLoading ? 'Đang xử lý...' : `Đặt hàng (${totalAmount.toLocaleString('vi-VN')}đ)`}
+              </button>
+              <button className="btn btn-secondary" onClick={() => setShowCheckoutModal(false)} disabled={checkoutLoading}>
+                Hủy
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

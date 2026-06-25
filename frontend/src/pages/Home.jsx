@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../services/api';
 import ProductCard from '../components/ProductCard';
 import './Home.css';
@@ -32,6 +33,32 @@ function Home() {
   const [selectedGender, setSelectedGender] = useState('');
   const [selectedSort, setSelectedSort] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
+  const [expandedCategory, setExpandedCategory] = useState('');
+
+  const [portalTarget, setPortalTarget] = useState(null);
+  const [searchPortalTarget, setSearchPortalTarget] = useState(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    setPortalTarget(document.getElementById('navbar-category-portal'));
+    setSearchPortalTarget(document.getElementById('navbar-search-portal'));
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Check if it's clicking on the trigger button itself to avoid double toggling
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        const trigger = document.querySelector('.nav-category-trigger-btn');
+        if (trigger && trigger.contains(event.target)) {
+          return;
+        }
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     fetchBanners();
@@ -146,6 +173,7 @@ function Home() {
     setSelectedGender('');
     setSelectedSort('newest');
     setCurrentPage(1);
+    setExpandedCategory('');
   };
 
   const hasActiveFilters = activeSearch || selectedCategory || selectedBrand || selectedGender || selectedSort !== 'newest';
@@ -158,8 +186,124 @@ function Home() {
   }, []);
 
   return (
-    <div className="container" style={{ padding: '0 1.5rem', display: 'flex', flexDirection: 'column' }}>
+    <div className="container home-page-container" style={{ padding: '0 1.5rem', display: 'flex', flexDirection: 'column' }}>
       
+      {/* ─── React Portal for Navbar Category Dropdown ───────────────────────── */}
+      {portalTarget && createPortal(
+        <div style={{ position: 'relative' }}>
+          <button
+            className={`nav-category-trigger-btn ${isDropdownOpen ? 'active' : ''}`}
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
+            📂 Danh mục
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          {isDropdownOpen && (
+            <div className="nav-category-menu" ref={dropdownRef}>
+              <button
+                className={`nav-category-item ${!selectedCategory ? 'active' : ''}`}
+                onClick={() => {
+                  handleCategorySelect('');
+                  setExpandedCategory('');
+                  setIsDropdownOpen(false);
+                }}
+              >
+                Tất cả sản phẩm
+              </button>
+              {categories.map((cat) => {
+                const hasChildren = cat.children && cat.children.length > 0;
+                const isExpanded = expandedCategory === cat.id;
+                const isSelected = selectedCategory === cat.id;
+                return (
+                  <div key={cat.id} className="nav-category-group">
+                    <button
+                      className={`nav-category-item ${isSelected ? 'active' : ''}`}
+                      onClick={() => {
+                        handleCategorySelect(cat.id);
+                        if (hasChildren) {
+                          setExpandedCategory(isExpanded ? '' : cat.id);
+                        } else {
+                          setIsDropdownOpen(false);
+                        }
+                      }}
+                    >
+                      <span>{cat.name}</span>
+                      {hasChildren && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+                          <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                      )}
+                    </button>
+                    {hasChildren && isExpanded && (
+                      <div className="nav-subcategory-list">
+                        {cat.children.map((child) => (
+                          <button
+                            key={child.id}
+                            className={`nav-subcategory-item ${selectedCategory === child.id ? 'active' : ''}`}
+                            onClick={() => {
+                              handleCategorySelect(child.id);
+                              setIsDropdownOpen(false);
+                            }}
+                          >
+                            {child.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>,
+        portalTarget
+      )}
+
+      {/* ─── React Portal for Navbar Search Bar ─────────────────────────────── */}
+      {searchPortalTarget && createPortal(
+        <form onSubmit={handleSearchSubmit} className="filter-search-form" style={{ margin: 0, width: '100%', maxWidth: '400px' }}>
+          <span className="filter-search-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </span>
+          <input type="text" className="filter-search-input" placeholder="Tìm sản phẩm..." value={searchVal} onChange={e => setSearchVal(e.target.value)} />
+          {searchVal && (
+            <button type="button" className="filter-search-clear" onClick={() => { setSearchVal(''); setActiveSearch(''); setCurrentPage(1); }}>×</button>
+          )}
+        </form>,
+        searchPortalTarget
+      )}
+
+      {/* ─── Premium Brands Bar (under header) ────────────────────────────────── */}
+      <div className="brands-bar-under-header">
+        <span className="brands-bar-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          Thương hiệu
+        </span>
+        <div className="filter-scroll-container">
+          <button className="filter-scroll-btn left" onClick={() => scrollPills(brandScrollRef, -1)} aria-label="Cuộn trái">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div className="filter-pills-track" ref={brandScrollRef}>
+            <button 
+              className={`filter-pill brand ${!selectedBrand ? 'active' : ''}`} 
+              onClick={() => handleBrandSelect('')}
+            >
+              Tất cả
+            </button>
+            {brands.map(brand => (
+              <button key={brand.id} className={`filter-pill brand ${selectedBrand === brand.id ? 'active' : ''}`} onClick={() => handleBrandSelect(brand.id)}>
+                {brand.name}
+              </button>
+            ))}
+          </div>
+          <button className="filter-scroll-btn right" onClick={() => scrollPills(brandScrollRef, 1)} aria-label="Cuộn phải">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+
       {/* ─── Banner Slider Section ─────────────────────────────────────────── */}
       {banners.length > 0 ? (
         <section className="home-banner-slider">
@@ -247,21 +391,15 @@ function Home() {
         </section>
       )}
 
+      {/* ─── Main Layout ───────────────────────────────────────────────────── */}
+      <div className="home-layout-wrapper" style={{ width: '100%' }}>
+        <div className="home-main-content" style={{ width: '100%' }}>
+
       {/* ─── Premium Filter Bar ──────────────────────────────────────────── */}
       <div className="filter-bar-wrap">
 
-        {/* Row 1: Search + Sort + Count + Clear */}
+        {/* Row 1: Sort + Count + Clear */}
         <div className="filter-bar-top">
-          {/* Search */}
-          <form onSubmit={handleSearchSubmit} className="filter-search-form">
-            <span className="filter-search-icon">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            </span>
-            <input type="text" className="filter-search-input" placeholder="Tìm sản phẩm..." value={searchVal} onChange={e => setSearchVal(e.target.value)} />
-            {searchVal && (
-              <button type="button" className="filter-search-clear" onClick={() => { setSearchVal(''); setActiveSearch(''); setCurrentPage(1); }}>×</button>
-            )}
-          </form>
 
           {/* Sort */}
           <div className="filter-sort-wrap">
@@ -322,53 +460,6 @@ function Home() {
             )}
           </div>
         )}
-
-        {/* Row 2: Categories */}
-        <div className="filter-group-row">
-          <span className="filter-group-label">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            Danh mục
-          </span>
-          <div className="filter-scroll-container">
-            <button className="filter-scroll-btn left" onClick={() => scrollPills(catScrollRef, -1)} aria-label="Cuộn trái">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
-            <div className="filter-pills-track" ref={catScrollRef}>
-              <button className={`filter-pill ${!selectedCategory ? 'active' : ''}`} onClick={() => handleCategorySelect('')}>Tất cả</button>
-              {flatCategories.map(cat => (
-                <button key={cat.id} className={`filter-pill ${selectedCategory === cat.id ? 'active' : ''}`} onClick={() => handleCategorySelect(cat.id)}>
-                  {cat.name}
-                </button>
-              ))}
-            </div>
-            <button className="filter-scroll-btn right" onClick={() => scrollPills(catScrollRef, 1)} aria-label="Cuộn phải">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Row 3: Brands */}
-        <div className="filter-group-row">
-          <span className="filter-group-label">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-            Thương hiệu
-          </span>
-          <div className="filter-scroll-container">
-            <button className="filter-scroll-btn left" onClick={() => scrollPills(brandScrollRef, -1)} aria-label="Cuộn trái">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
-            <div className="filter-pills-track" ref={brandScrollRef}>
-              {brands.map(brand => (
-                <button key={brand.id} className={`filter-pill brand ${selectedBrand === brand.id ? 'active' : ''}`} onClick={() => handleBrandSelect(brand.id)}>
-                  {brand.name}
-                </button>
-              ))}
-            </div>
-            <button className="filter-scroll-btn right" onClick={() => scrollPills(brandScrollRef, 1)} aria-label="Cuộn phải">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-          </div>
-        </div>
 
         {/* Row 4: Gender */}
         <div className="filter-group-row">
@@ -445,6 +536,9 @@ function Home() {
           </>
         )}
       </div>
+
+        </div> {/* End of Main Content */}
+      </div> {/* End of Layout Wrapper */}
 
     </div>
   );

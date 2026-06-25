@@ -110,7 +110,15 @@ function Login() {
           </div>
 
           <div className="form-group" style={{ marginBottom: '2rem' }}>
-            <label className="form-label">Mật khẩu</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label className="form-label" style={{ margin: 0 }}>Mật khẩu</label>
+              <Link 
+                to="/forgot-password" 
+                style={{ fontSize: '0.8rem', fontWeight: '600' }}
+              >
+                Quên mật khẩu?
+              </Link>
+            </div>
             <input 
               type="password" 
               className="form-control" 

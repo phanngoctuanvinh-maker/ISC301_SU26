@@ -5,6 +5,8 @@ import AdminRoute from './components/AdminRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import VerifyOtp from './pages/VerifyOtp';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Profile from './pages/Profile';
 import Addresses from './pages/Addresses';
 import Dashboard from './pages/admin/Dashboard';
@@ -13,10 +15,13 @@ import Brands from './pages/admin/Brands';
 import Products from './pages/admin/Products';
 import Variants from './pages/admin/Variants';
 import Banners from './pages/admin/Banners';
+import Vouchers from './pages/admin/Vouchers';
 import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
 import Wishlist from './pages/Wishlist';
 import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import OrderSuccess from './pages/OrderSuccess';
 
 // Layout components
 import UserLayout from './layouts/UserLayout';
@@ -34,6 +39,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
 
         {/* User / Customer Layout (Persistent storefront header) */}
@@ -75,6 +82,22 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/checkout" 
+            element={
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/order-success/:id" 
+            element={
+              <ProtectedRoute>
+                <OrderSuccess />
+              </ProtectedRoute>
+            } 
+          />
         </Route>
 
         {/* Admin Layout (Dedicated sidebar navigation dashboard) */}
@@ -93,6 +116,7 @@ function App() {
           <Route path="categories" element={<Categories />} />
           <Route path="brands" element={<Brands />} />
           <Route path="banners" element={<Banners />} />
+          <Route path="vouchers" element={<Vouchers />} />
         </Route>
         
         {/* Fallback Route */}

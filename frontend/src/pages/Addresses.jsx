@@ -16,11 +16,68 @@ function Addresses() {
   const [ward, setWard] = useState('');
   const [district, setDistrict] = useState('');
   const [city, setCity] = useState('');
+  const [addressType, setAddressType] = useState('Nhà');
   const [formError, setFormError] = useState('');
+
+  // Dropdown states for Vietnam Administrative Divisions
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
+  const [selectedProvinceCode, setSelectedProvinceCode] = useState('');
+  const [selectedDistrictCode, setSelectedDistrictCode] = useState('');
+  const [selectedWardCode, setSelectedWardCode] = useState('');
 
   useEffect(() => {
     fetchAddresses();
+    loadProvinces();
   }, []);
+
+  const loadProvinces = async () => {
+    try {
+      const res = await fetch('https://provinces.open-api.vn/api/p/');
+      const data = await res.json();
+      setProvinces(data);
+    } catch (err) {
+      console.error('Error loading provinces:', err);
+    }
+  };
+
+  // Load districts when province changes
+  useEffect(() => {
+    if (!selectedProvinceCode) {
+      setDistricts([]);
+      setWards([]);
+      return;
+    }
+    const loadDistricts = async () => {
+      try {
+        const res = await fetch(`https://provinces.open-api.vn/api/p/${selectedProvinceCode}?depth=2`);
+        const data = await res.json();
+        setDistricts(data.districts || []);
+      } catch (err) {
+        console.error('Error loading districts:', err);
+      }
+    };
+    loadDistricts();
+  }, [selectedProvinceCode]);
+
+  // Load wards when district changes
+  useEffect(() => {
+    if (!selectedDistrictCode) {
+      setWards([]);
+      return;
+    }
+    const loadWards = async () => {
+      try {
+        const res = await fetch(`https://provinces.open-api.vn/api/d/${selectedDistrictCode}?depth=2`);
+        const data = await res.json();
+        setWards(data.wards || []);
+      } catch (err) {
+        console.error('Error loading wards:', err);
+      }
+    };
+    loadWards();
+  }, [selectedDistrictCode]);
 
   const fetchAddresses = async () => {
     try {
@@ -42,20 +99,105 @@ function Addresses() {
     setWard('');
     setDistrict('');
     setCity('');
+    setAddressType('Nhà');
     setFormError('');
     setShowForm(false);
+
+    setSelectedProvinceCode('');
+    setSelectedDistrictCode('');
+    setSelectedWardCode('');
+    setDistricts([]);
+    setWards([]);
   };
 
-  const handleOpenEdit = (addr) => {
+  const handleProvinceChange = (e) => {
+    const code = e.target.value;
+    setSelectedProvinceCode(code);
+    setSelectedDistrictCode('');
+    setSelectedWardCode('');
+    setDistrict('');
+    setWard('');
+
+    const matched = provinces.find(p => String(p.code) === String(code));
+    setCity(matched ? matched.name : '');
+  };
+
+  const handleDistrictChange = (e) => {
+    const code = e.target.value;
+    setSelectedDistrictCode(code);
+    setSelectedWardCode('');
+    setWard('');
+
+    const matched = districts.find(d => String(d.code) === String(code));
+    setDistrict(matched ? matched.name : '');
+  };
+
+  const handleWardChange = (e) => {
+    const code = e.target.value;
+    setSelectedWardCode(code);
+
+    const matched = wards.find(w => String(w.code) === String(code));
+    setWard(matched ? matched.name : '');
+  };
+
+  const handleOpenEdit = async (addr) => {
     setEditingId(addr.id);
     setReceiverName(addr.receiver_name || '');
     setPhone(addr.phone || '');
     setAddressLine(addr.address_line || '');
-    setWard(addr.ward || '');
-    setDistrict(addr.district || '');
-    setCity(addr.city || '');
+    setAddressType(addr.address_type || 'Nhà');
     setFormError('');
     setShowForm(true);
+
+    // Mapped database values
+    setCity(addr.city || '');
+    setDistrict(addr.district || '');
+    setWard(addr.ward || '');
+
+    // Now map strings back to codes and fetch nested divisions sequentially
+    try {
+      let matchedProv = provinces.find(p => 
+        p.name.toLowerCase().includes(addr.city.toLowerCase()) || 
+        addr.city.toLowerCase().includes(p.name.toLowerCase())
+      );
+      if (matchedProv) {
+        setSelectedProvinceCode(matchedProv.code);
+
+        // Fetch districts immediately for editing
+        const distRes = await fetch(`https://provinces.open-api.vn/api/p/${matchedProv.code}?depth=2`);
+        const distData = await distRes.json();
+        const distList = distData.districts || [];
+        setDistricts(distList);
+
+        // Find district
+        let matchedDist = distList.find(d => 
+          d.name.toLowerCase().includes(addr.district.toLowerCase()) || 
+          addr.district.toLowerCase().includes(d.name.toLowerCase())
+        );
+        if (matchedDist) {
+          setSelectedDistrictCode(matchedDist.code);
+
+          // Fetch wards immediately for editing
+          const wardRes = await fetch(`https://provinces.open-api.vn/api/d/${matchedDist.code}?depth=2`);
+          const wardData = await wardRes.json();
+          const wardList = wardData.wards || [];
+          setWards(wardList);
+
+          // Find ward
+          if (addr.ward) {
+            let matchedWard = wardList.find(w => 
+              w.name.toLowerCase().includes(addr.ward.toLowerCase()) || 
+              addr.ward.toLowerCase().includes(w.name.toLowerCase())
+            );
+            if (matchedWard) {
+              setSelectedWardCode(matchedWard.code);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error mapping address to codes for editing:', err);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -86,7 +228,8 @@ function Addresses() {
       address_line: addressLine,
       ward: ward || null,
       district,
-      city
+      city,
+      address_type: addressType
     };
 
     try {
@@ -203,36 +346,67 @@ function Addresses() {
 
             <div className="grid grid-cols-3 gap-4" style={{ marginBottom: '1.5rem' }}>
               <div className="form-group">
-                <label className="form-label">Phường/Xã (Tùy chọn)</label>
-                <input 
-                  type="text" 
+                <label className="form-label">Tỉnh/Thành phố</label>
+                <select 
                   className="form-control" 
-                  value={ward} 
-                  onChange={(e) => setWard(e.target.value)} 
-                  placeholder="Phường Bến Nghé"
-                />
+                  value={selectedProvinceCode} 
+                  onChange={handleProvinceChange}
+                  required
+                >
+                  <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                  {provinces.map(p => (
+                    <option key={p.code} value={p.code}>{p.name}</option>
+                  ))}
+                </select>
               </div>
+
               <div className="form-group">
                 <label className="form-label">Quận/Huyện</label>
-                <input 
-                  type="text" 
+                <select 
                   className="form-control" 
-                  value={district} 
-                  onChange={(e) => setDistrict(e.target.value)} 
-                  placeholder="Quận 1"
+                  value={selectedDistrictCode} 
+                  onChange={handleDistrictChange}
+                  disabled={!selectedProvinceCode}
                   required
-                />
+                >
+                  <option value="">-- Chọn Quận/Huyện --</option>
+                  {districts.map(d => (
+                    <option key={d.code} value={d.code}>{d.name}</option>
+                  ))}
+                </select>
               </div>
+
               <div className="form-group">
-                <label className="form-label">Tỉnh/Thành phố</label>
-                <input 
-                  type="text" 
+                <label className="form-label">Phường/Xã (Tùy chọn)</label>
+                <select 
                   className="form-control" 
-                  value={city} 
-                  onChange={(e) => setCity(e.target.value)} 
-                  placeholder="TP. Hồ Chí Minh"
-                  required
-                />
+                  value={selectedWardCode} 
+                  onChange={handleWardChange}
+                  disabled={!selectedDistrictCode}
+                >
+                  <option value="">-- Chọn Phường/Xã --</option>
+                  {wards.map(w => (
+                    <option key={w.code} value={w.code}>{w.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <label className="form-label">Loại địa chỉ</label>
+              <div className="flex gap-4">
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input type="radio" name="addressType" value="Nhà" checked={addressType === 'Nhà'} onChange={(e) => setAddressType(e.target.value)} />
+                  Nhà
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input type="radio" name="addressType" value="Công ty" checked={addressType === 'Công ty'} onChange={(e) => setAddressType(e.target.value)} />
+                  Công ty
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input type="radio" name="addressType" value="Khác" checked={addressType === 'Khác'} onChange={(e) => setAddressType(e.target.value)} />
+                  Khác
+                </label>
               </div>
             </div>
 
@@ -273,6 +447,9 @@ function Addresses() {
                   )}
                 </div>
                 
+                <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                  <strong>Loại địa chỉ:</strong> {addr.address_type || 'Nhà'}
+                </p>
                 <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
                   <strong>Số điện thoại:</strong> {addr.phone}
                 </p>

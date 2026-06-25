@@ -13,7 +13,7 @@ function ProductCard({ product }) {
   return (
     <Link 
       to={`/product/${product.slug}`} 
-      className="glass-card address-card" 
+      className="glass-card product-card address-card" 
       style={{ 
         display: 'flex', 
         flexDirection: 'column', 
@@ -23,7 +23,6 @@ function ProductCard({ product }) {
         overflow: 'hidden',
         gap: '0.75rem',
         height: '100%',
-        border: '1px solid var(--glass-border)',
         borderRadius: '12px'
       }}
     >
@@ -121,15 +120,15 @@ function ProductCard({ product }) {
       }}>
         {hasDiscount ? (
           <>
-            <span style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--danger)' }}>
+            <span className="product-card-price product-card-price-discount" style={{ fontSize: '1.15rem', fontWeight: '700' }}>
               {product.discount_price.toLocaleString('vi-VN')}đ
             </span>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
+            <span className="product-card-price-original" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
               {product.price.toLocaleString('vi-VN')}đ
             </span>
           </>
         ) : (
-          <span style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+          <span className="product-card-price product-card-price-regular" style={{ fontSize: '1.15rem', fontWeight: '700' }}>
             {product.price ? product.price.toLocaleString('vi-VN') + 'đ' : '0đ'}
           </span>
         )}
