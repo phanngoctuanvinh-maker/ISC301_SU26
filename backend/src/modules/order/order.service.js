@@ -190,15 +190,7 @@ const createOrder = async (userId, body) => {
       );
     }
 
-    // Bước C: Giảm stock_quantity
-    for (const item of cartItems) {
-      await connection.execute(
-        `UPDATE product_variants SET stock_quantity = stock_quantity - ? WHERE id = ?`,
-        [item.quantity, item.variant_id]
-      );
-    }
-
-    // Bước D: Tăng used_count voucher (nếu có)
+    // Bước C: Tăng used_count voucher (nếu có)
     if (voucherId) {
       await connection.execute(
         `UPDATE vouchers SET used_count = used_count + 1 WHERE id = ?`,
@@ -212,7 +204,42 @@ const createOrder = async (userId, body) => {
       await connection.execute('DELETE FROM cart_items WHERE cart_id = ?', [cartRows[0].id]);
     }
 
+    // Bước F: Ghi bản ghi thanh toán vào bảng payments
+    await connection.execute(
+      `INSERT INTO payments (order_id, method, amount, status)
+       VALUES (?, ?, ?, 'pending')`,
+      [orderId, body.payment_method, totalAmount]
+    );
+
     await connection.commit();
+
+    // Gửi email xác nhận đơn hàng sau khi commit thành công (đối với phương thức COD)
+    const user = await db.queryOne('SELECT full_name, email FROM users WHERE id = ?', [userId]);
+    if (body.payment_method === 'cod' && user && user.email) {
+      const { transporter } = require('../../config/mail');
+      const { orderConfirmationEmailTemplate } = require('../../utils/email.templates');
+      
+      const orderObj = {
+        id: orderId,
+        shipping_address: shippingAddress,
+        payment_method: body.payment_method,
+        payment_status: 'unpaid',
+        subtotal,
+        discount_amount: discountAmount,
+        shipping_fee: shippingFee,
+        total_amount: totalAmount
+      };
+      
+      const { subject, html } = orderConfirmationEmailTemplate(user.full_name, orderObj, cartItems);
+      transporter.sendMail({
+        from: process.env.MAIL_FROM,
+        to: user.email,
+        subject,
+        html
+      }).catch(err => {
+        console.error('Lỗi khi gửi email xác nhận đơn hàng (COD):', err);
+      });
+    }
 
     return {
       order_id: orderId,
@@ -252,10 +279,16 @@ const getOrderDetail = async (orderId, userId) => {
   }
 
   const items = await db.query(
-    `SELECT oi.*, pv.color, pv.size, p.name as product_name, p.main_image_url, p.slug as product_slug
+    `SELECT oi.*, pv.color, pv.size, p.name as product_name, p.main_image_url, p.slug as product_slug, p.category_id,
+            c.name as category_name, c.slug as category_slug, c.parent_id as category_parent_id,
+            pc.name as parent_category_name, pc.slug as parent_category_slug,
+            pr.id as review_id, pr.rating as review_rating, pr.comment as review_comment
      FROM order_items oi
      JOIN product_variants pv ON pv.id = oi.variant_id
      JOIN products p ON p.id = pv.product_id
+     LEFT JOIN categories c ON c.id = p.category_id
+     LEFT JOIN categories pc ON pc.id = c.parent_id
+     LEFT JOIN product_reviews pr ON pr.order_item_id = oi.id
      WHERE oi.order_id = ?`,
     [orderId]
   );
@@ -264,9 +297,141 @@ const getOrderDetail = async (orderId, userId) => {
   return order;
 };
 
+const getAllOrdersForAdmin = async () => {
+  return await db.query(
+    `SELECT o.*, u.full_name as user_name, u.email as user_email, COUNT(oi.id) as item_count
+     FROM orders o
+     JOIN users u ON u.id = o.user_id
+     LEFT JOIN order_items oi ON oi.order_id = o.id
+     GROUP BY o.id
+     ORDER BY o.created_at DESC`
+  );
+};
+
+const getAdminOrderDetail = async (orderId) => {
+  const order = await db.queryOne(
+    `SELECT o.*, u.full_name as user_name, u.email as user_email 
+     FROM orders o 
+     JOIN users u ON u.id = o.user_id 
+     WHERE o.id = ?`, 
+    [orderId]
+  );
+  if (!order) {
+    throw { status: 404, message: 'Đơn hàng không tồn tại' };
+  }
+  const items = await db.query(
+    `SELECT oi.*, pv.color, pv.size, p.name as product_name, p.main_image_url, p.category_id,
+            c.name as category_name, c.slug as category_slug, c.parent_id as category_parent_id,
+            pc.name as parent_category_name, pc.slug as parent_category_slug
+     FROM order_items oi
+     JOIN product_variants pv ON pv.id = oi.variant_id
+     JOIN products p ON p.id = pv.product_id
+     LEFT JOIN categories c ON c.id = p.category_id
+     LEFT JOIN categories pc ON pc.id = c.parent_id
+     WHERE oi.order_id = ?`,
+    [orderId]
+  );
+  order.items = items;
+  return order;
+};
+
+const updateOrderStatusByAdmin = async (orderId, newStatus, trackingNumber) => {
+  const order = await db.queryOne('SELECT * FROM orders WHERE id = ?', [orderId]);
+  if (!order) {
+    throw { status: 404, message: 'Đơn hàng không tồn tại' };
+  }
+
+  const oldStatus = order.status;
+  const connection = await db.pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // 1. Tự động trừ kho khi chuyển từ 'pending' sang 'confirmed'
+    if (newStatus === 'confirmed' && oldStatus === 'pending') {
+      const [items] = await connection.execute('SELECT variant_id, quantity FROM order_items WHERE order_id = ?', [orderId]);
+      for (const item of items) {
+        // Kiểm tra tồn kho trước khi trừ
+        const [variantRows] = await connection.execute('SELECT stock_quantity, sku FROM product_variants WHERE id = ?', [item.variant_id]);
+        const variant = variantRows[0];
+        if (!variant || variant.stock_quantity < item.quantity) {
+          throw { 
+            status: 400, 
+            message: `Mã biến thể SKU ${variant ? variant.sku : 'không xác định'} không đủ hàng để xác nhận đơn` 
+          };
+        }
+        await connection.execute(
+          'UPDATE product_variants SET stock_quantity = stock_quantity - ? WHERE id = ?',
+          [item.quantity, item.variant_id]
+        );
+      }
+    }
+
+    // 2. Hoàn trả kho nếu hủy đơn hàng đã 'confirmed', 'shipping', 'delivered'
+    if (newStatus === 'cancelled' && ['confirmed', 'shipping', 'delivered'].includes(oldStatus)) {
+      const [items] = await connection.execute('SELECT variant_id, quantity FROM order_items WHERE order_id = ?', [orderId]);
+      for (const item of items) {
+        await connection.execute(
+          'UPDATE product_variants SET stock_quantity = stock_quantity + ? WHERE id = ?',
+          [item.quantity, item.variant_id]
+        );
+      }
+    }
+
+    // 3. Cập nhật trạng thái và mã vận đơn
+    const updateFields = [];
+    const params = [];
+    if (newStatus) {
+      updateFields.push('status = ?');
+      params.push(newStatus);
+    }
+    if (trackingNumber !== undefined) {
+      updateFields.push('tracking_number = ?');
+      params.push(trackingNumber || null);
+    }
+
+    if (updateFields.length > 0) {
+      params.push(orderId);
+      await connection.execute(
+        `UPDATE orders SET ${updateFields.join(', ')} WHERE id = ?`,
+        params
+      );
+    }
+
+    await connection.commit();
+    return { message: 'Cập nhật trạng thái đơn hàng thành công' };
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
+  }
+};
+
+const cancelOrderByCustomer = async (orderId, userId) => {
+  const order = await db.queryOne('SELECT * FROM orders WHERE id = ? AND user_id = ?', [orderId, userId]);
+  if (!order) {
+    throw { status: 404, message: 'Đơn hàng không tồn tại hoặc không thuộc quyền sở hữu của bạn' };
+  }
+
+  if (order.status !== 'pending') {
+    throw { status: 400, message: 'Chỉ có thể hủy đơn hàng ở trạng thái Chờ xử lý' };
+  }
+
+  await db.query('UPDATE orders SET status = \'cancelled\' WHERE id = ?', [orderId]);
+  
+  // Cập nhật trạng thái payment sang failed nếu là chưa thanh toán
+  await db.query('UPDATE payments SET status = \'failed\' WHERE order_id = ? AND status = \'pending\'', [orderId]);
+
+  return { message: 'Hủy đơn hàng thành công' };
+};
+
 module.exports = {
   previewOrder,
   createOrder,
   getUserOrders,
-  getOrderDetail
+  getOrderDetail,
+  getAllOrdersForAdmin,
+  getAdminOrderDetail,
+  updateOrderStatusByAdmin,
+  cancelOrderByCustomer
 };

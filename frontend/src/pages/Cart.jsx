@@ -20,6 +20,15 @@ function Cart() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutNote, setCheckoutNote] = useState('');
 
+  const syncCart = async () => {
+    try {
+      const res = await api.get('/cart');
+      setCart(res.data || { items: [], summary: { total_items: 0, subtotal: 0 } });
+    } catch (err) {
+      console.error('Lỗi đồng bộ giỏ hàng:', err);
+    }
+  };
+
   useEffect(() => {
     if (!token) {
       setError('Vui lòng đăng nhập để xem giỏ hàng của bạn.');
@@ -29,6 +38,15 @@ function Cart() {
     }
     fetchCart();
     fetchAddresses();
+
+    const handleCartUpdate = () => {
+      syncCart();
+    };
+
+    window.addEventListener('cart-updated', handleCartUpdate);
+    return () => {
+      window.removeEventListener('cart-updated', handleCartUpdate);
+    };
   }, [token]);
 
   const fetchAddresses = async () => {

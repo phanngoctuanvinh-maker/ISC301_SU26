@@ -302,6 +302,23 @@ const productService = {
           [id, fileUrl, currentCount + i]
         );
       }
+
+      // Tự động cập nhật main_image_url nếu chưa có hoặc ảnh hiện tại không tồn tại trên đĩa
+      let shouldUpdateMain = false;
+      if (!current.main_image_url) {
+        shouldUpdateMain = true;
+      } else {
+        const currentPath = path.join(process.cwd(), current.main_image_url.startsWith('/') ? current.main_image_url.substring(1) : current.main_image_url);
+        if (!fs.existsSync(currentPath)) {
+          shouldUpdateMain = true;
+        }
+      }
+
+      if (shouldUpdateMain) {
+        const firstFileUrl = `/uploads/products/${files[0].filename}`;
+        fields.push('main_image_url = ?');
+        values.push(firstFileUrl);
+      }
     }
 
     // Nếu không có bất kỳ thay đổi nào từ text body và không có file mới

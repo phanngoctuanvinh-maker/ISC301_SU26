@@ -23,9 +23,35 @@ function ProductCard({ product }) {
         overflow: 'hidden',
         gap: '0.75rem',
         height: '100%',
-        borderRadius: '12px'
+        borderRadius: '12px',
+        position: 'relative'
       }}
     >
+      {/* Featured Badge */}
+      {(product.is_featured === 1 || product.is_featured === true) && (
+        <span 
+          style={{
+            position: 'absolute',
+            top: '0.75rem',
+            left: '0.75rem',
+            backgroundColor: 'rgba(245, 158, 11, 0.95)', // Premium amber/gold
+            color: '#ffffff',
+            fontSize: '0.65rem',
+            fontWeight: '700',
+            padding: '3px 8px',
+            borderRadius: '20px',
+            zIndex: 10,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '3px',
+            boxShadow: '0 2px 8px rgba(245, 158, 11, 0.45)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.02em'
+          }}
+        >
+          ⭐ Nổi bật
+        </span>
+      )}
       {/* Product Image Container */}
       <div style={{ 
         width: '100%', 

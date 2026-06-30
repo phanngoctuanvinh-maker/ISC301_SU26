@@ -34,6 +34,7 @@ function Home() {
   const [selectedSort, setSelectedSort] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedCategory, setExpandedCategory] = useState('');
+  const [selectedFeatured, setSelectedFeatured] = useState(false);
 
   const [portalTarget, setPortalTarget] = useState(null);
   const [searchPortalTarget, setSearchPortalTarget] = useState(null);
@@ -93,7 +94,7 @@ function Home() {
 
   useEffect(() => {
     fetchProducts();
-  }, [activeSearch, selectedCategory, selectedBrand, selectedGender, selectedSort, currentPage]);
+  }, [activeSearch, selectedCategory, selectedBrand, selectedGender, selectedSort, currentPage, selectedFeatured]);
 
   const fetchCatalogs = async () => {
     try {
@@ -122,6 +123,7 @@ function Home() {
       if (selectedCategory) params.category_id = selectedCategory;
       if (selectedBrand) params.brand_id = selectedBrand;
       if (selectedGender) params.gender = selectedGender;
+      if (selectedFeatured) params.featured = 'true';
 
       const response = await api.get('/products', { params });
       setProducts(response.data?.items || []);
@@ -174,9 +176,10 @@ function Home() {
     setSelectedSort('newest');
     setCurrentPage(1);
     setExpandedCategory('');
+    setSelectedFeatured(false);
   };
 
-  const hasActiveFilters = activeSearch || selectedCategory || selectedBrand || selectedGender || selectedSort !== 'newest';
+  const hasActiveFilters = activeSearch || selectedCategory || selectedBrand || selectedGender || selectedSort !== 'newest' || selectedFeatured;
 
   // Flatten categories for filter bar
   const flatCategories = categories.reduce((acc, cat) => {
@@ -458,6 +461,11 @@ function Home() {
                 {selectedGender === 'male' ? '♂ Nam' : selectedGender === 'female' ? '♀ Nữ' : '⚡ Unisex'} <span className="active-chip-x">×</span>
               </button>
             )}
+            {selectedFeatured && (
+              <button className="active-chip" style={{ background: 'linear-gradient(135deg, hsl(38,92%,45%), hsl(25,90%,55%))' }} onClick={() => { setSelectedFeatured(false); setCurrentPage(1); }}>
+                ⭐ Nổi bật <span className="active-chip-x">×</span>
+              </button>
+            )}
           </div>
         )}
 
@@ -477,6 +485,30 @@ function Home() {
                 {g.label}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Row 5: Special Filters */}
+        <div className="filter-group-row" style={{ marginTop: '0.5rem' }}>
+          <span className="filter-group-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Đặc biệt
+          </span>
+          <div style={{ display: 'flex', gap: '0.4rem', padding: '3px 0' }}>
+            <button 
+              className={`filter-pill ${selectedFeatured ? 'active' : ''}`}
+              onClick={() => {
+                setSelectedFeatured(!selectedFeatured);
+                setCurrentPage(1);
+              }}
+              style={{
+                background: selectedFeatured ? 'linear-gradient(135deg, hsl(38,92%,45%), hsl(25,90%,55%))' : 'none',
+                borderColor: selectedFeatured ? 'transparent' : 'var(--glass-border)',
+                color: selectedFeatured ? '#fff' : 'inherit'
+              }}
+            >
+              ⭐ Sản phẩm nổi bật
+            </button>
           </div>
         </div>
 

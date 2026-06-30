@@ -24,6 +24,9 @@ function ProductDetail() {
   // Wishlist
   const [isFavorite, setIsFavorite] = useState(false);
 
+  // Reviews
+  const [reviews, setReviews] = useState([]);
+
   // Modals / Status
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -51,6 +54,14 @@ function ProductDetail() {
       setProduct(prodData);
       setVariants(prodData.variants || []);
 
+      // Fetch reviews
+      try {
+        const revRes = await api.get(`/reviews/product/${prodData.id}`);
+        setReviews(revRes.data?.reviews || []);
+      } catch (revErr) {
+        console.error('Error fetching reviews:', revErr);
+      }
+
       // Build product gallery
       const mainImg = prodData.main_image_url
         ? `http://localhost:8080${prodData.main_image_url}`
@@ -58,14 +69,19 @@ function ProductDetail() {
       
       setActiveImage(mainImg);
 
-      // Generate mock additional angles for premium look
-      const angles = [
-        mainImg,
-        'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=600',
-        'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=600',
-        'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=600'
-      ];
-      setAllImages(angles);
+      if (prodData.images && prodData.images.length > 0) {
+        const gallery = prodData.images.map(img => `http://localhost:8080${img.image_url}`);
+        setAllImages(gallery);
+      } else {
+        // Generate mock additional angles for premium look
+        const angles = [
+          mainImg,
+          'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=600',
+          'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=600',
+          'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=600'
+        ];
+        setAllImages(angles);
+      }
 
       // Check wishlist status
       if (token) {
@@ -315,8 +331,13 @@ function ProductDetail() {
             <h1 className="product-title" style={{ marginTop: '0.5rem' }}>{product.name}</h1>
             
             <div className="rating-row" style={{ marginTop: '0.75rem' }}>
-              <span>★★★★★</span>
-              <span className="rating-text">(4.9/5 • 182 đánh giá)</span>
+              <span style={{ color: 'var(--warning)' }}>
+                {'★'.repeat(Math.round(product.rating_average || 5))}
+                {'☆'.repeat(5 - Math.round(product.rating_average || 5))}
+              </span>
+              <span className="rating-text">
+                ({product.rating_average ? Number(product.rating_average).toFixed(1) : '5.0'}/5 • {product.rating_count || 0} đánh giá)
+              </span>
             </div>
           </div>
 
@@ -577,6 +598,69 @@ function ProductDetail() {
         <div className="highlights-image-wrapper">
           <img src={activeImage} alt={product.name} />
         </div>
+      </div>
+
+      {/* Product Reviews Section */}
+      <div className="glass-card" style={{ marginTop: '3rem', padding: '2rem' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', borderBottom: '2px solid var(--accent)', width: 'fit-content', paddingBottom: '0.5rem' }}>
+          Đánh giá sản phẩm ({reviews.length})
+        </h2>
+
+        {reviews.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '3rem', background: 'rgba(255, 255, 255, 0.2)', borderRadius: '12px', border: '1px dashed var(--glass-border)' }}>
+            <p style={{ color: 'var(--text-secondary)', margin: 0 }}>Chưa có đánh giá nào cho sản phẩm này. Đặt mua ngay để trở thành người đánh giá đầu tiên!</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {reviews.map((rev) => {
+              const userAvatarUrl = rev.user_avatar 
+                ? (rev.user_avatar.startsWith('http') ? rev.user_avatar : `http://localhost:8080${rev.user_avatar}`)
+                : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80';
+
+              return (
+                <div key={rev.id} style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '1.5rem' }}>
+                  <img 
+                    src={userAvatarUrl} 
+                    alt="User avatar" 
+                    style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--accent)' }} 
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)' }}>{rev.user_name}</h4>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        {new Date(rev.created_at).toLocaleString('vi-VN')}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.25rem 0' }}>
+                      <span style={{ color: 'var(--warning)', fontSize: '0.85rem' }}>
+                        {'★'.repeat(rev.rating)}
+                        {'☆'.repeat(5 - rev.rating)}
+                      </span>
+                      {rev.is_verified && (
+                        <span style={{ 
+                          fontSize: '0.7rem', 
+                          background: 'rgba(31, 173, 83, 0.1)', 
+                          color: '#16a34a', 
+                          border: '1px solid rgba(31, 173, 83, 0.2)', 
+                          padding: '1px 6px', 
+                          borderRadius: '4px',
+                          fontWeight: '600'
+                        }}>
+                          ✓ Đã mua hàng
+                        </span>
+                      )}
+                    </div>
+
+                    <p style={{ margin: '0.5rem 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                      {rev.comment || 'Không có bình luận.'}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Size Guide Modal Dialogue */}

@@ -88,6 +88,21 @@ export default function Checkout() {
         note: note || undefined
       });
       const orderId = res.data?.order_id || res.data?.data?.order_id;
+      
+      // Đồng bộ giỏ hàng ngay lập tức để làm trống badge ở Navbar
+      window.dispatchEvent(new Event('cart-updated'));
+      
+      if (paymentMethod === 'vnpay') {
+        const vnpayRes = await api.post('/payment/vnpay-url', { order_id: orderId });
+        const paymentUrl = vnpayRes.data?.paymentUrl || vnpayRes.data?.data?.paymentUrl;
+        if (paymentUrl) {
+          window.location.href = paymentUrl;
+          return;
+        } else {
+          throw new Error('Không thể khởi tạo liên kết thanh toán VNPAY');
+        }
+      }
+      
       navigate(`/order-success/${orderId}`);
     } catch (err) {
       setSubmitError(err.message || 'Đặt hàng thất bại, vui lòng thử lại');

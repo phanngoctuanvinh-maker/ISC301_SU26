@@ -179,6 +179,23 @@ async function getPublicProductBySlug(slug) {
     throw { status: 404, message: 'Sản phẩm không tồn tại' };
   }
 
+  // Fetch images for the product
+  const images = await db.query(
+    'SELECT id, image_url, sort_order FROM product_images WHERE product_id = ? ORDER BY sort_order ASC',
+    [product.id]
+  );
+  product.images = images;
+
+  // Fetch review statistics
+  const stats = await db.queryOne(
+    `SELECT COUNT(*) as count, COALESCE(ROUND(AVG(rating), 1), 5.0) as average
+     FROM product_reviews
+     WHERE product_id = ?`,
+    [product.id]
+  );
+  product.rating_average = stats ? Number(stats.average) : 5.0;
+  product.rating_count = stats ? stats.count : 0;
+
   return attachVariants(product);
 }
 

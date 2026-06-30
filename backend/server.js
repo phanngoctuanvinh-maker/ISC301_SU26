@@ -46,6 +46,9 @@ app.use('/api/brands', require('./src/modules/brand/brand.public.routes'));
 app.use('/api/cart', require('./src/modules/cart/cart.routes'));
 app.use('/api/wishlist', require('./src/modules/wishlist/wishlist.routes'));
 app.use('/api/orders', require('./src/modules/order/order.routes'));
+app.use('/api/reviews', require('./src/modules/review/review.routes'));
+app.use('/api/support', require('./src/modules/support/support.routes'));
+app.use('/api/payment', require('./src/modules/payment/payment.routes'));
 app.use('/api/banners', require('./src/modules/banner/banner.routes'));
 app.use('/api/vouchers', require('./src/modules/voucher/voucher.routes'));
 

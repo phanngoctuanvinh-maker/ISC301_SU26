@@ -16,12 +16,15 @@ import Products from './pages/admin/Products';
 import Variants from './pages/admin/Variants';
 import Banners from './pages/admin/Banners';
 import Vouchers from './pages/admin/Vouchers';
+import AdminOrders from './pages/admin/Orders';
+import AdminSupport from './pages/admin/Support';
 import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
 import Wishlist from './pages/Wishlist';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
+import VNPayReturn from './pages/VNPayReturn';
 
 // Layout components
 import UserLayout from './layouts/UserLayout';
@@ -98,6 +101,14 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/payment/vnpay-return" 
+            element={
+              <ProtectedRoute>
+                <VNPayReturn />
+              </ProtectedRoute>
+            } 
+          />
         </Route>
 
         {/* Admin Layout (Dedicated sidebar navigation dashboard) */}
@@ -117,6 +128,8 @@ function App() {
           <Route path="brands" element={<Brands />} />
           <Route path="banners" element={<Banners />} />
           <Route path="vouchers" element={<Vouchers />} />
+          <Route path="orders" element={<AdminOrders />} />
+          <Route path="support" element={<AdminSupport />} />
         </Route>
         
         {/* Fallback Route */}
