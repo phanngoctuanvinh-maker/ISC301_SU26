@@ -1,0 +1,189 @@
+.ai-assistant-page {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* Tin nhắn */
+.message-bubble-wrapper {
+  display: flex;
+  gap: 0.85rem;
+  max-width: 85%;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.message-bubble-wrapper.ai {
+  align-self: flex-start;
+}
+
+.message-bubble-wrapper.user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.message-sender-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+
+.message-bubble-wrapper.user .message-sender-avatar {
+  background: var(--primary-light);
+  border-color: var(--primary);
+}
+
+.message-content-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+.message-text-bubble {
+  padding: 0.85rem 1.25rem;
+  border-radius: 16px;
+  font-size: 0.925rem;
+  line-height: 1.5;
+  box-shadow: var(--shadow-sm);
+}
+
+.message-bubble-wrapper.ai .message-text-bubble {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-top-left-radius: 4px;
+  border: 1px solid var(--glass-border);
+}
+
+.message-bubble-wrapper.user .message-text-bubble {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white;
+  border-top-right-radius: 4px;
+}
+
+/* Cuộn ngang sản phẩm */
+.chat-products-grid {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding: 0.5rem 0.25rem 1rem 0.25rem;
+  width: 100%;
+  max-width: 580px;
+  scrollbar-width: thin;
+}
+
+.chat-products-grid::-webkit-scrollbar {
+  height: 6px;
+}
+
+.chat-products-grid::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 4px;
+}
+
+/* Lưới Outfit phối đồ */
+.outfit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  max-width: 580px;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 600px) {
+  .outfit-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.outfit-item-card {
+  display: flex;
+  gap: 0.75rem;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  transition: all var(--transition-fast);
+}
+
+.outfit-item-card:hover {
+  border-color: var(--accent);
+  background-color: var(--bg-secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.outfit-icon {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.outfit-details {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hiệu ứng gõ chữ loading của AI */
+.loading-bubble {
+  padding: 0.75rem 1.25rem;
+}
+
+.loading-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 15px;
+}
+
+.loading-dots span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--text-muted);
+  animation: typingDot 1.4s infinite ease-in-out both;
+}
+
+.loading-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes typingDot {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Nút khảo sát nhanh */
+.quick-prompt-btn {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  transition: all var(--transition-fast);
+}
+
+.quick-prompt-btn:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-1px);
+}

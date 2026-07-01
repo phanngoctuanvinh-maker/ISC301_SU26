@@ -7,7 +7,7 @@ const productController = {
    */
   async getPublicProducts(req, res, next) {
     try {
-      const result = await productService.listPublicProducts(req.query);
+      const result = await productService.listPublicProducts(req.query, req.user);
       return successResponse(res, result, 'Lấy danh sách sản phẩm thành công');
     } catch (error) {
       next(error);
@@ -20,7 +20,7 @@ const productController = {
   async getPublicProductBySlug(req, res, next) {
     try {
       const { slug } = req.params;
-      const product = await productService.getPublicProductBySlug(slug);
+      const product = await productService.getPublicProductBySlug(slug, req.user);
       return successResponse(res, product, 'Lấy chi tiết sản phẩm thành công');
     } catch (error) {
       next(error);

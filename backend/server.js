@@ -52,6 +52,7 @@ app.use('/api/payment', require('./src/modules/payment/payment.routes'));
 app.use('/api/banners', require('./src/modules/banner/banner.routes'));
 app.use('/api/vouchers', require('./src/modules/voucher/voucher.routes'));
 app.use('/api/flashsales', require('./src/modules/flashsale/flashsale.routes'));
+app.use('/api/ai', require('./src/modules/ai/ai.routes'));
 
 
 // Phục vụ các tệp tĩnh Frontend

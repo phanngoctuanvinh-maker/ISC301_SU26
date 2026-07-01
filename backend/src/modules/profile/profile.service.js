@@ -7,7 +7,7 @@ const profileService = {
   async getProfile(userId) {
     // 1. Query lấy thông tin cá nhân (loại trừ password_hash và social_id để an toàn)
     const user = await db.queryOne(
-      'SELECT id, full_name, email, phone, avatar_url, gender, date_of_birth, role, social_provider, created_at FROM users WHERE id = ?',
+      'SELECT id, full_name, email, phone, avatar_url, gender, date_of_birth, role, social_provider, foot_length_cm, foot_width, shoe_size_measured, style_preference, created_at FROM users WHERE id = ?',
       [userId]
     );
 

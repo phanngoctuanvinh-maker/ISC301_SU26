@@ -555,6 +555,27 @@ function Profile() {
 
               <div style={{ height: '1px', backgroundColor: 'var(--glass-border)', margin: '0 0.5rem' }}></div>
 
+              <Link to="/ai-measure" className="profile-menu-item">
+                <div className="profile-menu-item-left">
+                  <span className="profile-menu-item-icon" style={{ backgroundColor: 'rgba(99, 102, 241, 0.15)', color: 'var(--primary)' }}>
+                    📏
+                  </span>
+                  <span>Đo size chân bằng AI</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span className="profile-menu-item-value" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    {profile?.foot_length_cm ? `EU ${profile.shoe_size_measured} (${profile.foot_length_cm}cm)` : 'Chưa đo'}
+                  </span>
+                  <div className="profile-menu-item-chevron">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </div>
+                </div>
+              </Link>
+
+              <div style={{ height: '1px', backgroundColor: 'var(--glass-border)', margin: '0 0.5rem' }}></div>
+
               <div className="profile-menu-item" style={{ cursor: 'default' }}>
                 <div className="profile-menu-item-left">
                   <span className="profile-menu-item-icon" style={{ backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>

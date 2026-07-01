@@ -140,7 +140,76 @@ async function attachVariants(product) {
   };
 }
 
-async function listPublicProducts(query) {
+function calculateMatchScore(product, profile) {
+  if (!profile || !profile.shoe_size_measured) return null;
+
+  // Giày hoặc Phụ kiện
+  const isAccessory = product.category_slug === 'vo-tat' || 
+                      product.category_slug === 'lot-giay-the-thao' || 
+                      product.category_slug === 'day-giay-tron' || 
+                      product.category_slug === 'day-giay-det' || 
+                      product.category_slug === 'chai-xit-khu-mui';
+  if (isAccessory) {
+    return 100; // Phụ kiện luôn khớp 100%
+  }
+
+  // 1. Khớp size giày: Tối đa 50 điểm
+  let sizeScore = 10; // Mặc định điểm thấp nếu lệch nhiều hoặc hết hàng
+  if (product.available_sizes && product.available_sizes.length > 0) {
+    const userSize = parseInt(profile.shoe_size_measured);
+    const hasExact = product.available_sizes.some(s => parseInt(s) === userSize);
+    const hasClose = product.available_sizes.some(s => Math.abs(parseInt(s) - userSize) <= 1);
+    if (hasExact) {
+      sizeScore = 50;
+    } else if (hasClose) {
+      sizeScore = 30;
+    }
+  }
+
+  // 2. Khớp dáng chân / độ rộng chân: Tối đa 30 điểm
+  let widthScore = 20;
+  const isSlimShoe = product.category_slug === 'giay-oxford' || 
+                     product.category_slug === 'giay-loafer' || 
+                     product.slug?.includes('converse') || 
+                     product.slug?.includes('gucci') ||
+                     product.slug?.includes('alexander-mcqueen');
+                     
+  const isWideShoe = product.sport_type === 'running' || 
+                     product.sport_type === 'basketball' || 
+                     product.slug?.includes('ultraboost') || 
+                     product.slug?.includes('triple-s') || 
+                     product.slug?.includes('crocs');
+
+  if (profile.foot_width === 'wide') {
+    widthScore = isWideShoe ? 30 : (isSlimShoe ? 10 : 20);
+  } else if (profile.foot_width === 'narrow') {
+    widthScore = isSlimShoe ? 30 : (isWideShoe ? 15 : 25);
+  } else {
+    widthScore = 30; // Chân thường đi phom nào cũng vừa vặn tốt
+  }
+
+  // 3. Khớp gu thời trang ưa thích: Tối đa 20 điểm
+  let styleScore = 10;
+  if (profile.style_preference) {
+    const pref = profile.style_preference.toLowerCase();
+    const productSport = (product.sport_type || '').toLowerCase();
+    const catSlug = (product.category_slug || '').toLowerCase();
+
+    if (pref === 'running' && (productSport === 'running' || catSlug.includes('chay-bo'))) {
+      styleScore = 20;
+    } else if (pref === 'basketball' && (productSport === 'basketball' || catSlug.includes('bong-ro'))) {
+      styleScore = 20;
+    } else if (pref === 'lifestyle' && (productSport === 'lifestyle' || catSlug.includes('casual') || catSlug.includes('sneaker'))) {
+      styleScore = 20;
+    } else if (pref === 'formal' && (catSlug.includes('oxford') || catSlug.includes('loafer') || catSlug.includes('tay'))) {
+      styleScore = 20;
+    }
+  }
+
+  return sizeScore + widthScore + styleScore;
+}
+
+async function listPublicProducts(query, user) {
   const { page, limit, offset } = getPagination(query);
   const { where, values } = buildPublicFilters(query);
   const orderBy = sortableFields[query.sort] || sortableFields.newest;
@@ -217,13 +286,44 @@ async function listPublicProducts(query) {
     };
   });
 
+  // Tải thông tin size khả dụng hàng loạt
+  const productIds = mappedItems.map(p => p.id);
+  const sizeMap = new Map();
+  if (productIds.length > 0) {
+    const allVariants = await db.query(
+      `SELECT product_id, size FROM product_variants 
+       WHERE product_id IN (${productIds.join(',')}) AND is_active = true AND stock_quantity > 0`
+    );
+    allVariants.forEach(v => {
+      if (!sizeMap.has(v.product_id)) {
+        sizeMap.set(v.product_id, []);
+      }
+      sizeMap.get(v.product_id).push(v.size);
+    });
+  }
+
+  // Tải hồ sơ chân người dùng nếu đã đăng nhập
+  let userFootProfile = null;
+  if (user && user.userId) {
+    userFootProfile = await db.queryOne(
+      'SELECT foot_length_cm, foot_width, shoe_size_measured, style_preference FROM users WHERE id = ?',
+      [user.userId]
+    );
+  }
+
+  const finalizedItems = mappedItems.map(item => {
+    item.available_sizes = sizeMap.get(item.id) || [];
+    item.match_score = userFootProfile ? calculateMatchScore(item, userFootProfile) : null;
+    return item;
+  });
+
   return {
-    items: mappedItems,
+    items: finalizedItems,
     pagination: buildPagination(page, limit, total)
   };
 }
 
-async function getPublicProductBySlug(slug) {
+async function getPublicProductBySlug(slug, user) {
   const product = await db.queryOne(
     `
       ${buildProductSelect()}
@@ -301,7 +401,19 @@ async function getPublicProductBySlug(slug) {
     product.flash_sale = null;
   }
 
-  return attachVariants(product);
+  const productWithVariants = await attachVariants(product);
+
+  // Tải hồ sơ chân người dùng nếu đã đăng nhập để gán match score
+  let userFootProfile = null;
+  if (user && user.userId) {
+    userFootProfile = await db.queryOne(
+      'SELECT foot_length_cm, foot_width, shoe_size_measured, style_preference FROM users WHERE id = ?',
+      [user.userId]
+    );
+  }
+
+  productWithVariants.match_score = userFootProfile ? calculateMatchScore(productWithVariants, userFootProfile) : null;
+  return productWithVariants;
 }
 
 

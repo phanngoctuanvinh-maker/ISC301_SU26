@@ -76,6 +76,30 @@ function ProductCard({ product }) {
           ⭐ Nổi bật
         </span>
       )}
+      {product.match_score !== undefined && product.match_score !== null && (
+        <span 
+          style={{
+            position: 'absolute',
+            top: '0.75rem',
+            right: '0.75rem',
+            backgroundColor: 'rgba(6, 182, 212, 0.95)',
+            color: '#ffffff',
+            fontSize: '0.65rem',
+            fontWeight: '800',
+            padding: '3px 8px',
+            borderRadius: '20px',
+            zIndex: 10,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2px',
+            boxShadow: '0 2px 8px rgba(6, 182, 212, 0.45)',
+            textTransform: 'uppercase'
+          }}
+          title="Độ tương thích bàn chân đo bằng AI"
+        >
+          ✨ {product.match_score}% Fit
+        </span>
+      )}
       {/* Product Image Container */}
       <div style={{ 
         width: '100%', 

@@ -113,6 +113,27 @@ function Navbar() {
           <div id="navbar-search-portal" style={{ flex: 1, display: 'flex', justifyContent: 'center', margin: '0 2rem' }}></div>
           
           <div className="user-menu">
+            <Link 
+              to="/ai-assistant" 
+              className="cart-nav-btn" 
+              style={{ 
+                marginRight: '0.75rem', 
+                background: 'linear-gradient(135deg, hsla(262, 83%, 58%, 0.15), hsla(187, 92%, 46%, 0.15))',
+                border: '1px solid rgba(187, 92, 46, 0.3)',
+                borderRadius: '8px',
+                padding: '0.4rem 0.85rem',
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                color: '#ffffff',
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.3rem'
+              }}
+            >
+              ✨ Trợ lý AI
+            </Link>
+
             {token ? (
               <>
                 {/* Cart Trigger Button */}
@@ -167,6 +188,21 @@ function Navbar() {
                           ⚙️ Quản trị
                         </Link>
                       )}
+                      <Link 
+                        to="/ai-assistant" 
+                        className="nav-dropdown-item" 
+                        style={{ color: 'var(--accent)', fontWeight: 'bold' }}
+                        onClick={() => setIsUserDropdownOpen(false)}
+                      >
+                        ✨ Trợ lý AI
+                      </Link>
+                      <Link 
+                        to="/ai-measure" 
+                        className="nav-dropdown-item" 
+                        onClick={() => setIsUserDropdownOpen(false)}
+                      >
+                        📏 Đo size chân
+                      </Link>
                       <Link 
                         to="/profile" 
                         className="nav-dropdown-item" 

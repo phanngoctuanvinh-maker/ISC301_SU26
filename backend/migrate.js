@@ -93,6 +93,27 @@ async function migrate() {
     `);
     console.log('Created flash_sale_items table successfully.');
 
+    console.log('Adding AI personalization columns to users table...');
+    const columns = [
+      { name: 'foot_length_cm', type: 'DECIMAL(4,1) DEFAULT NULL' },
+      { name: 'foot_width', type: 'VARCHAR(20) DEFAULT NULL' },
+      { name: 'shoe_size_measured', type: 'INT DEFAULT NULL' },
+      { name: 'style_preference', type: 'VARCHAR(100) DEFAULT NULL' }
+    ];
+
+    for (const col of columns) {
+      try {
+        await db.query(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`);
+        console.log(`Added column ${col.name} successfully.`);
+      } catch (err) {
+        if (err.code === 'ER_DUP_FIELDNAME') {
+          console.log(`Column ${col.name} already exists.`);
+        } else {
+          throw err;
+        }
+      }
+    }
+
     console.log('Migration successful.');
   } catch (err) {
     console.error('Migration failed:', err);

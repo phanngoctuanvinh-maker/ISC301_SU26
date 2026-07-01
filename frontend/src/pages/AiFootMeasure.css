@@ -1,0 +1,185 @@
+.ai-measure-page {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.ai-measure-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.ai-measure-header h1 {
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.ai-measure-header .subtitle {
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+}
+
+.measure-step-card {
+  max-width: 650px;
+  margin: 0 auto;
+  padding: 2.5rem;
+  box-shadow: var(--shadow-lg);
+  border-radius: 16px;
+}
+
+.guide-box {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--glass-border);
+  border-left: 4px solid var(--primary);
+  padding: 1.25rem 1.5rem;
+  border-radius: 8px;
+}
+
+.guide-box h3 {
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+.guide-box ol, .guide-box ul {
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.warning-guide {
+  border-left-color: var(--accent);
+}
+
+.calibration-container {
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  position: relative;
+  touch-action: none; /* Ngăn chặn cuộn trang khi kéo thả trên di động */
+}
+
+/* Các chốt kéo thả */
+.calibration-handle {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  margin-left: -17px;
+  margin-top: -17px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  cursor: grab;
+  z-index: 100;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  border: 2px solid #ffffff;
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s ease;
+}
+
+.calibration-handle:active {
+  cursor: grabbing;
+  transform: scale(1.25);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+}
+
+/* Định nghĩa màu viền cho từng loại chốt */
+.handle-red {
+  border-color: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
+.handle-blue {
+  border-color: var(--primary);
+  box-shadow: 0 0 10px hsla(262, 83%, 58%, 0.4);
+}
+
+.handle-green {
+  border-color: var(--accent);
+  box-shadow: 0 0 10px hsla(187, 92%, 46%, 0.4);
+}
+
+/* Dashboard kết quả đo */
+.report-widget {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--glass-border);
+  padding: 1.5rem 1rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.widget-icon {
+  font-size: 1.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.report-widget h4 {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.widget-value {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* Điểm nhấn cho size giày khuyên dùng */
+.highlight-widget {
+  background: linear-gradient(135deg, var(--primary-light), var(--accent-light));
+  border: 1.5px solid var(--accent);
+  transform: scale(1.05);
+}
+
+.highlight-widget h4 {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.highlight-widget .widget-value {
+  font-size: 2rem;
+  color: var(--text-primary);
+}
+
+.text-glow {
+  text-shadow: 0 0 15px hsla(187, 92%, 46%, 0.35);
+}
+
+.size-tips-box {
+  background-color: hsla(187, 92%, 46%, 0.05);
+  border: 1px solid var(--accent-light);
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+
+.size-tips-box h4 {
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  color: var(--accent-hover);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.anim-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}

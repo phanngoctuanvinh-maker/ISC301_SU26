@@ -27,6 +27,8 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 import VNPayReturn from './pages/VNPayReturn';
+import AiAssistant from './pages/AiAssistant';
+import AiFootMeasure from './pages/AiFootMeasure';
 
 // Layout components
 import UserLayout from './layouts/UserLayout';
@@ -53,6 +55,8 @@ function App() {
           {/* Homepage */}
           <Route path="/" element={<Home />} />
           <Route path="/product/:slug" element={<ProductDetail />} />
+          <Route path="/ai-assistant" element={<AiAssistant />} />
+          <Route path="/ai-measure" element={<AiFootMeasure />} />
           
           {/* Protected Customer Routes */}
           <Route 
