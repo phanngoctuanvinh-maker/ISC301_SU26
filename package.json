@@ -10,9 +10,6 @@
     "build:frontend": "npm run build --prefix frontend",
     "build": "npm run build:frontend"
   },
-  "dependencies": {
-    "vnpay": "^2.5.0"
-  },
   "devDependencies": {
     "concurrently": "^8.2.2"
   }
