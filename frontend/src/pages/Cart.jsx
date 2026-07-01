@@ -236,7 +236,7 @@ function Cart() {
           <div className="cart-items-column">
             {cart.items.map((item) => {
               const imgUrl = item.main_image_url
-                ? `http://localhost:8080${item.main_image_url}`
+                ? item.main_image_url
                 : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200';
 
               return (

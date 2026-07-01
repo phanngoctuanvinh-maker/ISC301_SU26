@@ -289,7 +289,7 @@ function Categories() {
         <div className="flex flex-col gap-6">
           {categories.map((parent) => {
             const parentImg = parent.image_url 
-              ? `http://localhost:8080${parent.image_url}` 
+              ? parent.image_url 
               : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=150';
 
             return (

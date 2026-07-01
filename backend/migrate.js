@@ -61,6 +61,38 @@ async function migrate() {
     `);
     console.log('Created support_messages table successfully.');
 
+    console.log('Creating flash_sales table...');
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS flash_sales (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        start_time TIMESTAMP NOT NULL,
+        end_time TIMESTAMP NOT NULL,
+        is_active TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    `);
+    console.log('Created flash_sales table successfully.');
+
+    console.log('Creating flash_sale_items table...');
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS flash_sale_items (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        flash_sale_id INT NOT NULL,
+        product_id INT NOT NULL,
+        flash_price DECIMAL(12,2) NOT NULL,
+        flash_quantity INT NOT NULL,
+        sold_quantity INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (flash_sale_id) REFERENCES flash_sales(id) ON DELETE CASCADE,
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_sale_product (flash_sale_id, product_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    `);
+    console.log('Created flash_sale_items table successfully.');
+
     console.log('Migration successful.');
   } catch (err) {
     console.error('Migration failed:', err);
@@ -70,4 +102,5 @@ async function migrate() {
 }
 
 migrate();
+
 

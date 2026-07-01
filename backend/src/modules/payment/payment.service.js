@@ -150,11 +150,21 @@ const paymentService = {
           );
 
           // Trừ kho sản phẩm khi chuyển sang trạng thái confirmed
-          const [items] = await connection.execute('SELECT variant_id, quantity FROM order_items WHERE order_id = ?', [numericOrderId]);
+          const [items] = await connection.execute(
+            `SELECT oi.variant_id, oi.quantity, pv.product_id 
+             FROM order_items oi
+             JOIN product_variants pv ON pv.id = oi.variant_id
+             WHERE oi.order_id = ?`,
+            [numericOrderId]
+          );
           for (const item of items) {
             await connection.execute(
               'UPDATE product_variants SET stock_quantity = stock_quantity - ? WHERE id = ?',
               [item.quantity, item.variant_id]
+            );
+            await connection.execute(
+              'UPDATE products SET sold_count = sold_count + ? WHERE id = ?',
+              [item.quantity, item.product_id]
             );
           }
 
@@ -283,11 +293,21 @@ const paymentService = {
 
         // Trừ kho sản phẩm khi chuyển sang trạng thái confirmed (thanh toán thành công)
         if (isSuccess) {
-          const [items] = await connection.execute('SELECT variant_id, quantity FROM order_items WHERE order_id = ?', [orderId]);
+          const [items] = await connection.execute(
+            `SELECT oi.variant_id, oi.quantity, pv.product_id 
+             FROM order_items oi
+             JOIN product_variants pv ON pv.id = oi.variant_id
+             WHERE oi.order_id = ?`,
+            [orderId]
+          );
           for (const item of items) {
             await connection.execute(
               'UPDATE product_variants SET stock_quantity = stock_quantity - ? WHERE id = ?',
               [item.quantity, item.variant_id]
+            );
+            await connection.execute(
+              'UPDATE products SET sold_count = sold_count + ? WHERE id = ?',
+              [item.quantity, item.product_id]
             );
           }
         }

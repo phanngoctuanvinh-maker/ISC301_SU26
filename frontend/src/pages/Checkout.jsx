@@ -242,7 +242,7 @@ export default function Checkout() {
                   {preview.items.map(item => (
                     <div key={item.cart_id} className="checkout-summary__item">
                       <img
-                        src={item.main_image_url ? `http://localhost:8080${item.main_image_url}` : '/placeholder.png'}
+                        src={item.main_image_url ? item.main_image_url : '/placeholder.png'}
                         alt={item.product_name}
                         className="checkout-summary__item-img"
                       />

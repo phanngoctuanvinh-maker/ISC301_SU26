@@ -181,7 +181,7 @@ function Brands() {
         <div className="grid grid-cols-2 gap-6">
           {brands.map((brand) => {
             const logoUrl = brand.logo_url 
-              ? `http://localhost:8080${brand.logo_url}` 
+              ? brand.logo_url 
               : 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=150';
 
             return (

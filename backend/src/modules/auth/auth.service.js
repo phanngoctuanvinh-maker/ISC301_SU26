@@ -316,7 +316,10 @@ const authService = {
     );
 
     // 5. Gửi link đặt lại mật khẩu về email
-    const resetUrl = `http://localhost:5173/reset-password?token=${token}`;
+    const clientUrl = process.env.CLIENT_URL 
+      ? process.env.CLIENT_URL.split(',')[0] 
+      : 'http://localhost:5173';
+    const resetUrl = `${clientUrl}/reset-password?token=${token}`;
     const { subject, html } = resetPasswordEmailTemplate(user.full_name, resetUrl);
 
     try {

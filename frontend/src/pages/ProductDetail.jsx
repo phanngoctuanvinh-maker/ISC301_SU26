@@ -33,10 +33,50 @@ function ProductDetail() {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
+  // Selected combo accessory sizes
+  const [selectedSocksSize, setSelectedSocksSize] = useState('');
+  const [selectedLacesSize, setSelectedLacesSize] = useState('');
+
+  // Flash sale countdown state
+  const [flashTimeLeft, setFlashTimeLeft] = useState({ hours: '00', minutes: '00', seconds: '00' });
+
+  useEffect(() => {
+    if (!product || !product.flash_sale) return;
+
+    const calculateTime = () => {
+      const now = new Date().getTime();
+      const start = new Date(product.flash_sale.start_time).getTime();
+      const end = new Date(product.flash_sale.end_time).getTime();
+
+      let target = product.flash_sale.status === 'active' ? end : start;
+      let diff = target - now;
+
+      if (diff <= 0) {
+        fetchProductDetails();
+        return;
+      }
+
+      const hrs = Math.floor(diff / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+      setFlashTimeLeft({
+        hours: String(hrs).padStart(2, '0'),
+        minutes: String(mins).padStart(2, '0'),
+        seconds: String(secs).padStart(2, '0')
+      });
+    };
+
+    calculateTime();
+    const interval = setInterval(calculateTime, 1000);
+    return () => clearInterval(interval);
+  }, [product?.flash_sale]);
+
   // Check login token
   const token = localStorage.getItem('token');
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
     fetchProductDetails();
     fetchAccessories();
   }, [slug]);
@@ -54,6 +94,15 @@ function ProductDetail() {
       setProduct(prodData);
       setVariants(prodData.variants || []);
 
+      if (prodData.combo) {
+        if (prodData.combo.socks?.available_sizes?.length > 0) {
+          setSelectedSocksSize(prodData.combo.socks.available_sizes[0]);
+        }
+        if (prodData.combo.laces?.available_sizes?.length > 0) {
+          setSelectedLacesSize(prodData.combo.laces.available_sizes[0]);
+        }
+      }
+
       // Fetch reviews
       try {
         const revRes = await api.get(`/reviews/product/${prodData.id}`);
@@ -64,13 +113,13 @@ function ProductDetail() {
 
       // Build product gallery
       const mainImg = prodData.main_image_url
-        ? `http://localhost:8080${prodData.main_image_url}`
+        ? prodData.main_image_url
         : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600';
       
       setActiveImage(mainImg);
 
       if (prodData.images && prodData.images.length > 0) {
-        const gallery = prodData.images.map(img => `http://localhost:8080${img.image_url}`);
+        const gallery = prodData.images.map(img => img.image_url);
         setAllImages(gallery);
       } else {
         // Generate mock additional angles for premium look
@@ -216,6 +265,53 @@ function ProductDetail() {
     }
   };
 
+  const handleBuyCombo = async () => {
+    if (!token) {
+      setError('Vui lòng đăng nhập để thực hiện mua combo.');
+      setTimeout(() => navigate('/login'), 2000);
+      return;
+    }
+
+    if (!selectedSize) {
+      setError('Vui lòng chọn size giày của bạn trước khi mua combo.');
+      window.scrollTo({ top: 150, behavior: 'smooth' });
+      setTimeout(() => setError(''), 4000);
+      return;
+    }
+
+    if (!product.combo) return;
+
+    try {
+      setError('');
+      setSuccessMsg('Đang xử lý thêm combo vào giỏ hàng...');
+
+      const mainVariantId = selectedVariant.id;
+      
+      const socksVar = product.combo.socks.variants.find(v => v.size === selectedSocksSize);
+      const lacesVar = product.combo.laces.variants.find(v => v.size === selectedLacesSize);
+
+      if (!socksVar || !lacesVar) {
+        throw new Error('Không tìm thấy kích cỡ phù hợp cho phụ kiện combo.');
+      }
+
+      // Add all three in parallel
+      await Promise.all([
+        api.post('/cart/items', { variant_id: mainVariantId, quantity: quantity }),
+        api.post('/cart/items', { variant_id: socksVar.id, quantity: 1 }),
+        api.post('/cart/items', { variant_id: lacesVar.id, quantity: 1 })
+      ]);
+
+      setSuccessMsg('Đã thêm trọn bộ Combo hoàn chỉnh (Giảm giá 15%) vào giỏ hàng thành công!');
+      window.dispatchEvent(new Event('cart-updated'));
+      window.dispatchEvent(new Event('open-cart-drawer'));
+      
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch (err) {
+      setError(err.message || 'Lỗi thêm combo vào giỏ hàng.');
+      setTimeout(() => setError(''), 4000);
+    }
+  };
+
   const handleAddToCart = async (redirectOnSuccess = false) => {
     if (!token) {
       setError('Vui lòng đăng nhập để thực hiện thêm sản phẩm vào giỏ hàng.');
@@ -257,8 +353,6 @@ function ProductDetail() {
       window.dispatchEvent(new Event('open-cart-drawer'));
       
       if (redirectOnSuccess) {
-        // Since there is no dedicated checkout page yet, we simulate redirect
-        // In real app we would do: navigate('/cart');
         alert('Mua hàng thành công! Bạn có thể xem giỏ hàng của mình.');
       }
       
@@ -296,7 +390,7 @@ function ProductDetail() {
   const totalCombinedPrice = (currentPrice * quantity) + accessoriesTotal;
 
   return (
-    <div className="container" style={{ padding: '2rem 1.5rem', flex: 1 }}>
+    <div className="container product-detail-container" style={{ padding: '2rem 1.5rem', flex: 1 }}>
       
       {/* Messages */}
       {error && <div className="alert alert-danger" style={{ position: 'sticky', top: '70px', zIndex: 50 }}>{error}</div>}
@@ -341,7 +435,97 @@ function ProductDetail() {
             </div>
           </div>
 
+          {/* Flash Sale Banner & Countdown */}
+          {product.flash_sale && (
+            <div 
+              style={{
+                background: product.flash_sale.status === 'active' 
+                  ? 'linear-gradient(90deg, #ef4444 0%, #f59e0b 100%)' 
+                  : 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
+                padding: '0.75rem 1rem',
+                borderRadius: '8px',
+                color: 'white',
+                marginTop: '1rem',
+                marginBottom: '1rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.5rem',
+                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 800, fontSize: '0.9rem' }}>
+                <span>{product.flash_sale.status === 'active' ? '⚡ FLASH SALE ĐANG DIỄN RA' : '⏰ FLASH SALE SẮP DIỄN RA'}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                <span style={{ fontWeight: 700 }}>
+                  {product.flash_sale.status === 'active' ? 'Kết thúc sau:' : 'Bắt đầu sau:'}
+                </span>
+                <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                  <span style={{ background: 'black', padding: '2px 5px', borderRadius: '4px', fontWeight: 'bold' }}>{flashTimeLeft.hours}</span>:
+                  <span style={{ background: 'black', padding: '2px 5px', borderRadius: '4px', fontWeight: 'bold' }}>{flashTimeLeft.minutes}</span>:
+                  <span style={{ background: 'black', padding: '2px 5px', borderRadius: '4px', fontWeight: 'bold' }}>{flashTimeLeft.seconds}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Flash Sale Remaining Stock Progress Bar */}
+          {product.flash_sale && product.flash_sale.status === 'active' && (
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Số lượng giới hạn:</span>
+                <span style={{ color: '#ef4444' }}>Đã bán {product.flash_sale.sold_quantity} / {product.flash_sale.flash_quantity} đôi</span>
+              </div>
+              <div style={{ height: '10px', background: 'rgba(255,255,255,0.1)', borderRadius: '5px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
+                <div 
+                  style={{ 
+                    height: '100%', 
+                    background: 'linear-gradient(90deg, #f59e0b 0%, #ef4444 100%)', 
+                    width: `${Math.min(100, (product.flash_sale.sold_quantity / product.flash_sale.flash_quantity) * 100)}%`,
+                    borderRadius: '5px'
+                  }} 
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Flash Sale Upcoming Pre-announcement details */}
+          {product.flash_sale && product.flash_sale.status === 'upcoming' && (
+            <div 
+              style={{ 
+                backgroundColor: 'rgba(245, 158, 11, 0.1)', 
+                border: '1px solid rgba(245, 158, 11, 0.3)', 
+                padding: '0.75rem', 
+                borderRadius: '8px', 
+                fontSize: '0.9rem', 
+                marginBottom: '1.25rem',
+                color: '#f59e0b'
+              }}
+            >
+              🎉 Sản phẩm sẽ được mở bán với giá Flash Sale cực sốc: 
+              <strong style={{ marginLeft: '4px', fontSize: '1rem', color: '#ef4444' }}>
+                {product.flash_sale.flash_price.toLocaleString('vi-VN')}₫
+              </strong> (Giới hạn {product.flash_sale.flash_quantity} đôi)
+            </div>
+          )}
+
           <div className="price-box">
+            {product.flash_sale && product.flash_sale.status === 'active' && (
+              <span style={{ 
+                fontSize: '0.75rem', 
+                background: '#ef4444', 
+                color: 'white', 
+                padding: '2px 6px', 
+                borderRadius: '4px', 
+                fontWeight: 'bold',
+                alignSelf: 'center',
+                marginRight: '0.5rem'
+              }}>
+                ⚡ GIÁ FLASH SALE
+              </span>
+            )}
             <span className="price-main">
               {currentPrice ? currentPrice.toLocaleString('vi-VN') + 'đ' : '0đ'}
             </span>
@@ -455,6 +639,102 @@ function ProductDetail() {
             </div>
           </div>
 
+          {/* Smart Proposed Combo (Combo Hoàn Chỉnh) */}
+          {product.combo && (
+            <div className="product-combo-card glass-card">
+              <div className="combo-card-header">
+                <div className="combo-title-badge">🔥 COMBO HOÀN CHỈNH</div>
+                <div className="combo-save-tag">Tiết kiệm 15%</div>
+              </div>
+              <p className="combo-subtitle">
+                Đề xuất trọn bộ phối màu và phụ kiện cùng thương hiệu <strong>{product.brand_name}</strong> để tối ưu hóa phong cách của bạn.
+              </p>
+              
+              <div className="combo-visual-connector">
+                {/* 1. Shoe */}
+                <div className="combo-item-node">
+                  <div className="combo-img-wrapper">
+                    <img src={activeImage} alt={product.name} />
+                  </div>
+                  <span className="combo-node-name">{product.name}</span>
+                  <span className="combo-node-price">{(product.discount_price || product.price).toLocaleString('vi-VN')}₫</span>
+                  <span className="combo-node-size-label">
+                    {selectedSize ? `Size: ${selectedSize}` : 'Chưa chọn size'}
+                  </span>
+                </div>
+                
+                <div className="combo-plus-sign">+</div>
+                
+                {/* 2. Socks */}
+                <div className="combo-item-node">
+                  <div className="combo-img-wrapper">
+                    <img 
+                      src={product.combo.socks.main_image_url ? product.combo.socks.main_image_url : 'https://images.unsplash.com/photo-1582966772680-860e372bb558?w=100'} 
+                      alt={product.combo.socks.name} 
+                    />
+                  </div>
+                  <span className="combo-node-name">{product.combo.socks.name}</span>
+                  <span className="combo-node-price">{(product.combo.socks.discount_price || product.combo.socks.price).toLocaleString('vi-VN')}₫</span>
+                  
+                  {product.combo.socks.available_sizes.length > 0 && (
+                    <select 
+                      value={selectedSocksSize} 
+                      onChange={(e) => setSelectedSocksSize(e.target.value)}
+                      className="combo-size-select"
+                    >
+                      {product.combo.socks.available_sizes.map(sz => (
+                        <option key={sz} value={sz}>Size: {sz}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+                
+                <div className="combo-plus-sign">+</div>
+                
+                {/* 3. Laces */}
+                <div className="combo-item-node">
+                  <div className="combo-img-wrapper">
+                    <img 
+                      src={product.combo.laces.main_image_url ? product.combo.laces.main_image_url : 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=100'} 
+                      alt={product.combo.laces.name} 
+                    />
+                  </div>
+                  <span className="combo-node-name">{product.combo.laces.name}</span>
+                  <span className="combo-node-price">{(product.combo.laces.discount_price || product.combo.laces.price).toLocaleString('vi-VN')}₫</span>
+                  
+                  {product.combo.laces.available_sizes.length > 0 && (
+                    <select 
+                      value={selectedLacesSize} 
+                      onChange={(e) => setSelectedLacesSize(e.target.value)}
+                      className="combo-size-select"
+                    >
+                      {product.combo.laces.available_sizes.map(sz => (
+                        <option key={sz} value={sz}>Size: {sz}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+
+              <div className="combo-price-summary-box">
+                <div className="combo-price-breakdown">
+                  <div>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Giá mua lẻ: </span>
+                    <span className="combo-old-price">{product.combo.original_total.toLocaleString('vi-VN')}₫</span>
+                  </div>
+                  <div style={{ marginTop: '0.2rem' }}>
+                    <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>Combo chỉ: </span>
+                    <span className="combo-new-price">{product.combo.combo_total.toLocaleString('vi-VN')}₫</span>
+                  </div>
+                </div>
+                
+                <button onClick={handleBuyCombo} className="btn-buy-combo">
+                  ⚡ MUA COMBO (GIẢM 15%)
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* bought-together cards (Mua Kèm) */}
           {accessories.length > 0 && (
             <div className="bought-together-card">
@@ -468,7 +748,7 @@ function ProductDetail() {
               <div className="bought-together-list">
                 {accessories.map((acc) => {
                   const accImg = acc.main_image_url
-                    ? `http://localhost:8080${acc.main_image_url}`
+                    ? acc.main_image_url
                     : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=100';
                   
                   const accVarId = acc.variants?.[0]?.id || acc.id;
@@ -614,7 +894,7 @@ function ProductDetail() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {reviews.map((rev) => {
               const userAvatarUrl = rev.user_avatar 
-                ? (rev.user_avatar.startsWith('http') ? rev.user_avatar : `http://localhost:8080${rev.user_avatar}`)
+                ? (rev.user_avatar.startsWith('http') ? rev.user_avatar : rev.user_avatar)
                 : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80';
 
               return (

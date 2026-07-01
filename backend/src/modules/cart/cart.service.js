@@ -37,6 +37,26 @@ async function getVariantForCart(variantId) {
     throw { status: 404, message: 'Size sản phẩm không tồn tại hoặc đang tạm ẩn' };
   }
 
+  // Override price/stock if under active flash sale
+  const flashSale = await db.queryOne(
+    `SELECT fsi.flash_price, fsi.flash_quantity, fsi.sold_quantity
+     FROM flash_sale_items fsi
+     INNER JOIN flash_sales fs ON fs.id = fsi.flash_sale_id
+     WHERE fsi.product_id = ?
+       AND fs.is_active = 1
+       AND fs.start_time <= NOW()
+       AND fs.end_time >= NOW()
+       AND fsi.sold_quantity < fsi.flash_quantity
+     LIMIT 1`,
+    [variant.product_id]
+  );
+
+  if (flashSale) {
+    variant.price = Number(flashSale.flash_price);
+    const remaining = flashSale.flash_quantity - flashSale.sold_quantity;
+    variant.stock_quantity = Math.min(variant.stock_quantity, remaining);
+  }
+
   return variant;
 }
 
@@ -50,6 +70,8 @@ function mapCartItem(item) {
     name: item.name,
     slug: item.slug,
     brand_name: item.brand_name,
+    brand_id: item.brand_id,
+    category_slug: item.category_slug,
     main_image_url: item.main_image_url,
     sku: item.sku,
     size: item.size,
@@ -66,7 +88,8 @@ function buildCartResponse(items) {
     items: mappedItems,
     summary: {
       total_items: mappedItems.reduce((sum, item) => sum + item.quantity, 0),
-      subtotal: mappedItems.reduce((sum, item) => sum + item.line_total, 0)
+      subtotal: mappedItems.reduce((sum, item) => sum + item.line_total, 0),
+      combo_discount: 0
     }
   };
 }
@@ -87,18 +110,54 @@ async function getCart(userId) {
         p.slug,
         p.main_image_url,
         COALESCE(pv.discount_price, pv.price, p.price) AS price,
-        b.name AS brand_name
+        b.name AS brand_name,
+        p.brand_id,
+        c.slug AS category_slug
       FROM cart_items ci
       INNER JOIN product_variants pv ON pv.id = ci.variant_id
       INNER JOIN products p ON p.id = pv.product_id
       INNER JOIN brands b ON b.id = p.brand_id
+      INNER JOIN categories c ON c.id = p.category_id
       WHERE ci.cart_id = ?
       ORDER BY ci.id DESC
     `,
     [cart.id]
   );
 
-  return buildCartResponse(rows);
+  // Apply active flash sale prices and stock limits to cart items
+  for (const row of rows) {
+    const flashSale = await db.queryOne(
+      `SELECT fsi.flash_price, fsi.flash_quantity, fsi.sold_quantity
+       FROM flash_sale_items fsi
+       INNER JOIN flash_sales fs ON fs.id = fsi.flash_sale_id
+       WHERE fsi.product_id = ?
+         AND fs.is_active = 1
+         AND fs.start_time <= NOW()
+         AND fs.end_time >= NOW()
+         AND fsi.sold_quantity < fsi.flash_quantity
+       LIMIT 1`,
+      [row.product_id]
+    );
+
+    if (flashSale) {
+      row.price = Number(flashSale.flash_price);
+      const remaining = flashSale.flash_quantity - flashSale.sold_quantity;
+      row.stock_quantity = Math.min(row.stock_quantity, remaining);
+    }
+  }
+
+  const mappedItems = rows.map(mapCartItem);
+  const { applyComboDiscount } = require('../../utils/combo.util');
+  const totalComboDiscount = applyComboDiscount(mappedItems);
+
+  return {
+    items: mappedItems,
+    summary: {
+      total_items: mappedItems.reduce((sum, item) => sum + item.quantity, 0),
+      subtotal: mappedItems.reduce((sum, item) => sum + item.line_total, 0),
+      combo_discount: totalComboDiscount
+    }
+  };
 }
 
 async function addItem(userId, body) {

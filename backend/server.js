@@ -51,6 +51,8 @@ app.use('/api/support', require('./src/modules/support/support.routes'));
 app.use('/api/payment', require('./src/modules/payment/payment.routes'));
 app.use('/api/banners', require('./src/modules/banner/banner.routes'));
 app.use('/api/vouchers', require('./src/modules/voucher/voucher.routes'));
+app.use('/api/flashsales', require('./src/modules/flashsale/flashsale.routes'));
+
 
 // Phục vụ các tệp tĩnh Frontend
 app.use(express.static(path.join(__dirname, 'public')));

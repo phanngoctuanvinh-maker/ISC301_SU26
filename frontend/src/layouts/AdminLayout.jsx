@@ -35,6 +35,7 @@ function AdminLayout() {
     if (path.includes('/admin/brands')) return 'Quản Lý Thương Hiệu';
     if (path.includes('/admin/banners')) return 'Quản Lý Banner';
     if (path.includes('/admin/vouchers')) return 'Quản Lý Voucher';
+    if (path.includes('/admin/flashsales')) return 'Quản Lý Flash Sale';
     if (path.includes('/admin/orders')) return 'Quản Lý Đơn Hàng';
     if (path.includes('/admin/support')) return 'Chăm Sóc Khách Hàng';
     return 'Trang Quản Trị';
@@ -139,6 +140,18 @@ function AdminLayout() {
               <path d="M22 9a3 3 0 0 0 0 6"/>
             </svg>
             Quản Lý Voucher
+          </NavLink>
+
+          <NavLink 
+            to="/admin/flashsales" 
+            className={({ isActive }) => `admin-menu-link ${isActive ? 'active' : ''}`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Quản Lý Flash Sale
           </NavLink>
 
           <NavLink 

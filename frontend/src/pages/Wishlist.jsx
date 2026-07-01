@@ -76,7 +76,7 @@ function Wishlist() {
         <div className="grid grid-cols-3 gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
           {wishlist.map((item) => {
             const imageUrl = item.main_image_url
-              ? `http://localhost:8080${item.main_image_url}`
+              ? item.main_image_url
               : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400';
 
             return (

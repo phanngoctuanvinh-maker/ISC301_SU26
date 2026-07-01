@@ -4,6 +4,7 @@ import api from '../services/api';
 import ProductCard from '../components/ProductCard';
 import './Home.css';
 
+
 function Home() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -35,6 +36,7 @@ function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedCategory, setExpandedCategory] = useState('');
   const [selectedFeatured, setSelectedFeatured] = useState(false);
+  const [selectedSportType, setSelectedSportType] = useState('');
 
   const [portalTarget, setPortalTarget] = useState(null);
   const [searchPortalTarget, setSearchPortalTarget] = useState(null);
@@ -94,7 +96,7 @@ function Home() {
 
   useEffect(() => {
     fetchProducts();
-  }, [activeSearch, selectedCategory, selectedBrand, selectedGender, selectedSort, currentPage, selectedFeatured]);
+  }, [activeSearch, selectedCategory, selectedBrand, selectedGender, selectedSort, currentPage, selectedFeatured, selectedSportType]);
 
   const fetchCatalogs = async () => {
     try {
@@ -124,6 +126,9 @@ function Home() {
       if (selectedBrand) params.brand_id = selectedBrand;
       if (selectedGender) params.gender = selectedGender;
       if (selectedFeatured) params.featured = 'true';
+      if (selectedSportType) {
+        params.sport_type = selectedSportType;
+      }
 
       const response = await api.get('/products', { params });
       setProducts(response.data?.items || []);
@@ -156,6 +161,11 @@ function Home() {
     setCurrentPage(1);
   };
 
+  const handleSportTypeSelect = (sportType) => {
+    setSelectedSportType(selectedSportType === sportType ? '' : sportType);
+    setCurrentPage(1);
+  };
+
   const handleSortSelect = (e) => {
     setSelectedSort(e.target.value);
     setCurrentPage(1);
@@ -177,9 +187,10 @@ function Home() {
     setCurrentPage(1);
     setExpandedCategory('');
     setSelectedFeatured(false);
+    setSelectedSportType('');
   };
 
-  const hasActiveFilters = activeSearch || selectedCategory || selectedBrand || selectedGender || selectedSort !== 'newest' || selectedFeatured;
+  const hasActiveFilters = activeSearch || selectedCategory || selectedBrand || selectedGender || selectedSort !== 'newest' || selectedFeatured || selectedSportType;
 
   // Flatten categories for filter bar
   const flatCategories = categories.reduce((acc, cat) => {
@@ -322,7 +333,7 @@ function Home() {
                 style={{ cursor: banner.link_type !== 'none' ? 'pointer' : 'default' }}
               >
                 <img
-                  src={`http://localhost:8080${banner.image_url}`}
+                  src={banner.image_url}
                   alt={banner.title || `Banner ${i + 1}`}
                   className="slider-img"
                   onError={e => { e.target.src = ''; e.target.style.display = 'none'; }}
@@ -398,6 +409,8 @@ function Home() {
       <div className="home-layout-wrapper" style={{ width: '100%' }}>
         <div className="home-main-content" style={{ width: '100%' }}>
 
+
+
       {/* ─── Premium Filter Bar ──────────────────────────────────────────── */}
       <div className="filter-bar-wrap">
 
@@ -466,6 +479,17 @@ function Home() {
                 ⭐ Nổi bật <span className="active-chip-x">×</span>
               </button>
             )}
+            {selectedSportType && (
+              <button className="active-chip" style={{ background: 'linear-gradient(135deg, hsl(150,80%,40%), hsl(160,90%,50%))' }} onClick={() => { setSelectedSportType(''); setCurrentPage(1); }}>
+                🎯 Mục đích: {
+                  selectedSportType === 'running' ? 'Chạy bộ' :
+                  selectedSportType === 'football' ? 'Đá bóng' :
+                  selectedSportType === 'basketball' ? 'Bóng rổ' :
+                  selectedSportType === 'training' ? 'Tập luyện' :
+                  selectedSportType === 'tennis' ? 'Tennis' : selectedSportType
+                } <span className="active-chip-x">×</span>
+              </button>
+            )}
           </div>
         )}
 
@@ -483,6 +507,35 @@ function Home() {
             ].map(g => (
               <button key={g.key} className={`filter-pill gender ${selectedGender === g.key ? 'active' : ''}`} onClick={() => handleGenderSelect(g.key)}>
                 {g.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Row: Sport Type */}
+        <div className="filter-group-row" style={{ marginTop: '0.5rem' }}>
+          <span className="filter-group-label">
+            🎯 Mục đích
+          </span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', padding: '3px 0' }}>
+            {[
+              { key: 'running',    label: '👟 Chạy bộ' },
+              { key: 'football',   label: '⚽ Đá bóng' },
+              { key: 'basketball', label: '🏀 Bóng rổ' },
+              { key: 'training',   label: '🏋️‍♂️ Tập luyện' },
+              { key: 'tennis',     label: '🎾 Tennis' }
+            ].map(item => (
+              <button 
+                key={item.key} 
+                className={`filter-pill ${selectedSportType === item.key ? 'active' : ''}`} 
+                onClick={() => handleSportTypeSelect(item.key)}
+                style={{
+                  background: selectedSportType === item.key ? 'linear-gradient(135deg, hsl(150,80%,40%), hsl(160,90%,50%))' : 'none',
+                  borderColor: selectedSportType === item.key ? 'transparent' : 'var(--glass-border)',
+                  color: selectedSportType === item.key ? '#fff' : 'inherit'
+                }}
+              >
+                {item.label}
               </button>
             ))}
           </div>

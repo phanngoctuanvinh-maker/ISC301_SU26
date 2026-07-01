@@ -15,15 +15,16 @@ const calculateShippingFee = (city) => {
 };
 
 const previewOrder = async (userId, body) => {
-  // 1. Lấy giỏ hàng của user kèm thông tin variant
+  // 1. Lấy giỏ hàng của user kèm thông tin variant, brand_id, category_slug
   const cartItems = await db.query(
     `SELECT ci.id as cart_id, ci.variant_id, ci.quantity,
             COALESCE(pv.price, p.price) AS price, pv.discount_price, pv.stock_quantity, pv.color, pv.size,
-            p.name as product_name, p.main_image_url
+            p.name as product_name, p.main_image_url, p.brand_id, p.id as product_id, cat.slug as category_slug
      FROM cart_items ci
      JOIN carts c ON c.id = ci.cart_id
      JOIN product_variants pv ON pv.id = ci.variant_id
      JOIN products p ON p.id = pv.product_id
+     JOIN categories cat ON cat.id = p.category_id
      WHERE c.user_id = ?`,
     [userId]
   );
@@ -32,11 +33,39 @@ const previewOrder = async (userId, body) => {
     throw { status: 400, message: 'Giỏ hàng của bạn đang trống' };
   }
 
+  // Override price/stock if under active flash sale
+  for (const item of cartItems) {
+    const flashSale = await db.queryOne(
+      `SELECT fsi.flash_price, fsi.flash_quantity, fsi.sold_quantity
+       FROM flash_sale_items fsi
+       INNER JOIN flash_sales fs ON fs.id = fsi.flash_sale_id
+       WHERE fsi.product_id = ?
+         AND fs.is_active = 1
+         AND fs.start_time <= NOW()
+         AND fs.end_time >= NOW()
+         AND fsi.sold_quantity < fsi.flash_quantity
+       LIMIT 1`,
+      [item.product_id]
+    );
+    if (flashSale) {
+      item.price = Number(flashSale.flash_price);
+      item.discount_price = null;
+      const remaining = flashSale.flash_quantity - flashSale.sold_quantity;
+      item.stock_quantity = Math.min(item.stock_quantity, remaining);
+    }
+  }
+
+  // Map và áp dụng combo discount
+  const mappedItems = cartItems.map(item => ({
+    ...item,
+    price: Number(item.discount_price || item.price)
+  }));
+  const { applyComboDiscount } = require('../../utils/combo.util');
+  const totalComboDiscount = applyComboDiscount(mappedItems);
+
   // 2. Tính subtotal
-  const subtotal = cartItems.reduce((sum, item) => {
-    const itemPrice = item.discount_price || item.price;
-    return sum + itemPrice * item.quantity;
-  }, 0);
+  const subtotal = mappedItems.reduce((sum, item) => sum + item.line_total, 0);
+
   // 3. Lấy địa chỉ để tính phí ship
   let address = null;
   let shippingFee = 0;
@@ -69,8 +98,9 @@ const previewOrder = async (userId, body) => {
   const totalAmount = subtotal - discountAmount + shippingFee;
 
   return {
-    items: cartItems,
+    items: mappedItems,
     subtotal,
+    combo_discount: totalComboDiscount,
     discount_amount: discountAmount,
     shipping_fee: shippingFee,
     total_amount: totalAmount,
@@ -81,21 +111,44 @@ const previewOrder = async (userId, body) => {
 };
 
 const createOrder = async (userId, body) => {
-  // 1. Lấy giỏ hàng kèm thông tin variant
+  // 1. Lấy giỏ hàng kèm thông tin variant, brand_id, category_slug
   const cartItems = await db.query(
     `SELECT ci.id as cart_id, ci.variant_id, ci.quantity,
             COALESCE(pv.price, p.price) AS price, pv.discount_price, pv.stock_quantity, pv.color, pv.size,
-            p.name as product_name, p.main_image_url
+            p.name as product_name, p.main_image_url, p.brand_id, p.id as product_id, cat.slug as category_slug
      FROM cart_items ci
      JOIN carts c ON c.id = ci.cart_id
      JOIN product_variants pv ON pv.id = ci.variant_id
      JOIN products p ON p.id = pv.product_id
+     JOIN categories cat ON cat.id = p.category_id
      WHERE c.user_id = ?`,
     [userId]
   );
 
   if (cartItems.length === 0) {
     throw { status: 400, message: 'Giỏ hàng của bạn đang trống' };
+  }
+
+  // Override price/stock if under active flash sale
+  for (const item of cartItems) {
+    const flashSale = await db.queryOne(
+      `SELECT fsi.flash_price, fsi.flash_quantity, fsi.sold_quantity
+       FROM flash_sale_items fsi
+       INNER JOIN flash_sales fs ON fs.id = fsi.flash_sale_id
+       WHERE fsi.product_id = ?
+         AND fs.is_active = 1
+         AND fs.start_time <= NOW()
+         AND fs.end_time >= NOW()
+         AND fsi.sold_quantity < fsi.flash_quantity
+       LIMIT 1`,
+      [item.product_id]
+    );
+    if (flashSale) {
+      item.price = Number(flashSale.flash_price);
+      item.discount_price = null;
+      const remaining = flashSale.flash_quantity - flashSale.sold_quantity;
+      item.stock_quantity = Math.min(item.stock_quantity, remaining);
+    }
   }
 
   // 2. Lấy địa chỉ
@@ -118,11 +171,16 @@ const createOrder = async (userId, body) => {
     }
   }
 
+  // Map và áp dụng combo discount
+  const mappedItems = cartItems.map(item => ({
+    ...item,
+    price: Number(item.discount_price || item.price)
+  }));
+  const { applyComboDiscount } = require('../../utils/combo.util');
+  const totalComboDiscount = applyComboDiscount(mappedItems);
+
   // 4. Tính subtotal
-  const subtotal = cartItems.reduce((sum, item) => {
-    const price = item.discount_price || item.price;
-    return sum + price * item.quantity;
-  }, 0);
+  const subtotal = mappedItems.reduce((sum, item) => sum + item.line_total, 0);
 
   // 5. Tính shipping fee
   let shippingFee = calculateShippingFee(address.city);
@@ -176,7 +234,43 @@ const createOrder = async (userId, body) => {
     const orderId = orderResult.insertId;
 
     // Bước B: INSERT order_items
-    for (const item of cartItems) {
+    for (const item of mappedItems) {
+      const originalItem = cartItems.find(x => x.variant_id === item.variant_id);
+      
+      const finalUnitPrice = item.price; // Giá sau khi trừ combo discount
+      const discountAtPurchase = finalUnitPrice < originalItem.price ? finalUnitPrice : 0;
+
+      // Lock and update flash sale sold quantity if applicable
+      const [flashSaleRows] = await connection.execute(
+        `SELECT fsi.id, fsi.flash_quantity, fsi.sold_quantity
+         FROM flash_sale_items fsi
+         INNER JOIN flash_sales fs ON fs.id = fsi.flash_sale_id
+         WHERE fsi.product_id = ?
+           AND fs.is_active = 1
+           AND fs.start_time <= NOW()
+           AND fs.end_time >= NOW()
+           AND fsi.sold_quantity < fsi.flash_quantity
+         LIMIT 1
+         FOR UPDATE`,
+        [item.product_id]
+      );
+
+      if (flashSaleRows.length > 0) {
+        const flashItem = flashSaleRows[0];
+        const remaining = flashItem.flash_quantity - flashItem.sold_quantity;
+        if (item.quantity > remaining) {
+          throw {
+            status: 400,
+            message: `Sản phẩm "${item.product_name}" trong chương trình Flash Sale chỉ còn lại ${remaining} đôi.`
+          };
+        }
+
+        await connection.execute(
+          `UPDATE flash_sale_items SET sold_quantity = sold_quantity + ? WHERE id = ?`,
+          [item.quantity, flashItem.id]
+        );
+      }
+
       await connection.execute(
         `INSERT INTO order_items (order_id, variant_id, quantity, price_at_purchase, discount_at_purchase)
          VALUES (?, ?, ?, ?, ?)`,
@@ -184,8 +278,8 @@ const createOrder = async (userId, body) => {
           orderId,
           item.variant_id,
           item.quantity,
-          item.price,
-          item.discount_price || 0
+          originalItem.price,
+          discountAtPurchase
         ]
       );
     }
@@ -230,7 +324,7 @@ const createOrder = async (userId, body) => {
         total_amount: totalAmount
       };
       
-      const { subject, html } = orderConfirmationEmailTemplate(user.full_name, orderObj, cartItems);
+      const { subject, html } = orderConfirmationEmailTemplate(user.full_name, orderObj, mappedItems);
       transporter.sendMail({
         from: process.env.MAIL_FROM,
         to: user.email,
@@ -348,7 +442,13 @@ const updateOrderStatusByAdmin = async (orderId, newStatus, trackingNumber) => {
 
     // 1. Tự động trừ kho khi chuyển từ 'pending' sang 'confirmed'
     if (newStatus === 'confirmed' && oldStatus === 'pending') {
-      const [items] = await connection.execute('SELECT variant_id, quantity FROM order_items WHERE order_id = ?', [orderId]);
+      const [items] = await connection.execute(
+        `SELECT oi.variant_id, oi.quantity, pv.product_id 
+         FROM order_items oi
+         JOIN product_variants pv ON pv.id = oi.variant_id
+         WHERE oi.order_id = ?`,
+        [orderId]
+      );
       for (const item of items) {
         // Kiểm tra tồn kho trước khi trừ
         const [variantRows] = await connection.execute('SELECT stock_quantity, sku FROM product_variants WHERE id = ?', [item.variant_id]);
@@ -363,16 +463,30 @@ const updateOrderStatusByAdmin = async (orderId, newStatus, trackingNumber) => {
           'UPDATE product_variants SET stock_quantity = stock_quantity - ? WHERE id = ?',
           [item.quantity, item.variant_id]
         );
+        await connection.execute(
+          'UPDATE products SET sold_count = sold_count + ? WHERE id = ?',
+          [item.quantity, item.product_id]
+        );
       }
     }
 
     // 2. Hoàn trả kho nếu hủy đơn hàng đã 'confirmed', 'shipping', 'delivered'
     if (newStatus === 'cancelled' && ['confirmed', 'shipping', 'delivered'].includes(oldStatus)) {
-      const [items] = await connection.execute('SELECT variant_id, quantity FROM order_items WHERE order_id = ?', [orderId]);
+      const [items] = await connection.execute(
+        `SELECT oi.variant_id, oi.quantity, pv.product_id 
+         FROM order_items oi
+         JOIN product_variants pv ON pv.id = oi.variant_id
+         WHERE oi.order_id = ?`,
+        [orderId]
+      );
       for (const item of items) {
         await connection.execute(
           'UPDATE product_variants SET stock_quantity = stock_quantity + ? WHERE id = ?',
           [item.quantity, item.variant_id]
+        );
+        await connection.execute(
+          'UPDATE products SET sold_count = GREATEST(0, CAST(sold_count AS SIGNED) - ?) WHERE id = ?',
+          [item.quantity, item.product_id]
         );
       }
     }

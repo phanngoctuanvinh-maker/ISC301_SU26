@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 function ProductCard({ product }) {
   // Determine product main image url
   const imageUrl = product.main_image_url
-    ? `http://localhost:8080${product.main_image_url}`
+    ? product.main_image_url
     : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400';
 
   // Format pricing
@@ -27,8 +27,32 @@ function ProductCard({ product }) {
         position: 'relative'
       }}
     >
-      {/* Featured Badge */}
-      {(product.is_featured === 1 || product.is_featured === true) && (
+      {product.flash_sale ? (
+        <span 
+          style={{
+            position: 'absolute',
+            top: '0.75rem',
+            left: '0.75rem',
+            backgroundColor: product.flash_sale.status === 'active' ? '#ef4444' : '#f59e0b',
+            color: '#ffffff',
+            fontSize: '0.65rem',
+            fontWeight: '800',
+            padding: '3px 8px',
+            borderRadius: '20px',
+            zIndex: 10,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '3px',
+            boxShadow: product.flash_sale.status === 'active' 
+              ? '0 2px 8px rgba(239, 68, 68, 0.5)' 
+              : '0 2px 8px rgba(245, 158, 11, 0.5)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.02em'
+          }}
+        >
+          {product.flash_sale.status === 'active' ? '⚡ SIÊU SALE' : '⏰ SẮP SALE'}
+        </span>
+      ) : (product.is_featured === 1 || product.is_featured === true) && (
         <span 
           style={{
             position: 'absolute',
@@ -117,6 +141,17 @@ function ProductCard({ product }) {
         }}>
           {product.name}
         </h3>
+
+        {/* Rating and Sales Count */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', fontSize: '0.75rem' }}>
+          <span style={{ color: 'var(--warning)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '2px' }}>
+            ★ {Number(product.rating_average || 5.0).toFixed(1)}
+          </span>
+          <span style={{ color: 'var(--text-muted)' }}>|</span>
+          <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>
+            Đã bán {product.sold_count || 0}
+          </span>
+        </div>
         
         {/* Gender / Sport Type tags (Optional) */}
         {(product.gender || product.sport_type) && (
@@ -133,6 +168,31 @@ function ProductCard({ product }) {
             )}
           </div>
         )}
+        {/* Flash Sale Progress bar or Upcoming pre-order price */}
+        {product.flash_sale && product.flash_sale.status === 'active' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '0.5rem', width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', fontWeight: 800 }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Tiến độ:</span>
+              <span style={{ color: '#ef4444' }}>Đã bán {product.flash_sale.sold_quantity}/{product.flash_sale.flash_quantity}</span>
+            </div>
+            <div style={{ height: '6px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '3px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
+              <div 
+                style={{ 
+                  height: '100%', 
+                  background: 'linear-gradient(90deg, #f59e0b 0%, #ef4444 100%)', 
+                  width: `${Math.min(100, (product.flash_sale.sold_quantity / product.flash_sale.flash_quantity) * 100)}%`,
+                  borderRadius: '3px'
+                }} 
+              />
+            </div>
+          </div>
+        )}
+        
+        {product.flash_sale && product.flash_sale.status === 'upcoming' && (
+          <div style={{ fontSize: '0.65rem', color: '#f59e0b', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '3px' }}>
+            ⏰ Sắp bán: {product.flash_sale.flash_price.toLocaleString('vi-VN')}₫
+          </div>
+        )}
       </div>
 
       {/* Pricing Section */}
@@ -146,7 +206,7 @@ function ProductCard({ product }) {
       }}>
         {hasDiscount ? (
           <>
-            <span className="product-card-price product-card-price-discount" style={{ fontSize: '1.15rem', fontWeight: '700' }}>
+            <span className="product-card-price product-card-price-discount" style={{ fontSize: '1.15rem', fontWeight: '700', color: product.flash_sale && product.flash_sale.status === 'active' ? '#ef4444' : 'inherit' }}>
               {product.discount_price.toLocaleString('vi-VN')}đ
             </span>
             <span className="product-card-price-original" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>

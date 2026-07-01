@@ -339,7 +339,7 @@ function Orders() {
                       }}
                     >
                       <img
-                        src={item.main_image_url ? `http://localhost:8080${item.main_image_url}` : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=80'}
+                        src={item.main_image_url ? item.main_image_url : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=80'}
                         alt={item.product_name}
                         style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--glass-border)' }}
                       />

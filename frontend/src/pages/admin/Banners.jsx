@@ -107,7 +107,7 @@ function Banners() {
       sort_order: banner.sort_order ?? 0,
     });
     setImageFile(null);
-    setImagePreview(banner.image_url ? `http://localhost:8080${banner.image_url}` : null);
+    setImagePreview(banner.image_url ? banner.image_url : null);
     setFormError('');
     setShowForm(true);
   };
@@ -367,7 +367,7 @@ function Banners() {
                   <div className="banner-card__img-wrap">
                     {banner.image_url ? (
                       <img
-                        src={`http://localhost:8080${banner.image_url}`}
+                        src={banner.image_url}
                         alt={banner.title || 'Banner'}
                         className="banner-card__img"
                         onError={e => {
@@ -644,7 +644,7 @@ function Banners() {
             </p>
             {confirmDelete.image_url && (
               <img
-                src={`http://localhost:8080${confirmDelete.image_url}`}
+                src={confirmDelete.image_url}
                 alt="Preview"
                 className="banner-confirm-preview"
               />

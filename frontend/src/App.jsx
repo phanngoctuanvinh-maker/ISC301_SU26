@@ -16,7 +16,9 @@ import Products from './pages/admin/Products';
 import Variants from './pages/admin/Variants';
 import Banners from './pages/admin/Banners';
 import Vouchers from './pages/admin/Vouchers';
+import Flashsales from './pages/admin/Flashsales';
 import AdminOrders from './pages/admin/Orders';
+
 import AdminSupport from './pages/admin/Support';
 import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
@@ -128,7 +130,9 @@ function App() {
           <Route path="brands" element={<Brands />} />
           <Route path="banners" element={<Banners />} />
           <Route path="vouchers" element={<Vouchers />} />
+          <Route path="flashsales" element={<Flashsales />} />
           <Route path="orders" element={<AdminOrders />} />
+
           <Route path="support" element={<AdminSupport />} />
         </Route>
         

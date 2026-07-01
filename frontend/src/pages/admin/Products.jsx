@@ -422,7 +422,7 @@ function Products() {
                       }}
                     >
                       <img 
-                        src={`http://localhost:8080${img.image_url}`} 
+                        src={img.image_url} 
                         alt="Product" 
                         style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '4px' }}
                       />
@@ -539,7 +539,7 @@ function Products() {
             <tbody>
               {products.map((p) => {
                 const imgCover = p.main_image_url 
-                  ? `http://localhost:8080${p.main_image_url}` 
+                  ? p.main_image_url 
                   : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=100';
 
                 return (
