@@ -9,7 +9,6 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Profile from './pages/Profile';
 import Addresses from './pages/Addresses';
-import Dashboard from './pages/admin/Dashboard';
 import Categories from './pages/admin/Categories';
 import Brands from './pages/admin/Brands';
 import Products from './pages/admin/Products';
@@ -126,8 +125,7 @@ function App() {
             </AdminRoute>
           }
         >
-          {/* Admin nested routes */}
-          <Route index element={<Dashboard />} />
+          <Route index element={<Navigate to="/admin/products" replace />} />
           <Route path="products" element={<Products />} />
           <Route path="products/:productId/variants" element={<Variants />} />
           <Route path="categories" element={<Categories />} />

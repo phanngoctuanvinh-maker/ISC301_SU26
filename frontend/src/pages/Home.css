@@ -790,7 +790,9 @@
 /* ─── Brands bar under header ─── */
 .brands-bar-under-header {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
   background: linear-gradient(135deg, 
     rgba(255, 255, 255, 0.9) 0%, 
     hsla(262, 83%, 98%, 0.95) 50%, 

@@ -543,62 +543,6 @@ function ProductDetail() {
 
           <div className="section-divider"></div>
 
-          {/* AI Match Score Breakdown Panel */}
-          {product.match_score !== undefined && product.match_score !== null && (
-            <div className="ai-match-breakdown-card" style={{
-              background: 'linear-gradient(135deg, hsla(187, 92%, 46%, 0.08) 0%, hsla(262, 83%, 58%, 0.05) 100%)',
-              border: '1.5px solid var(--accent-light)',
-              borderRadius: '12px',
-              padding: '1rem 1.25rem',
-              marginBottom: '1.25rem',
-              boxShadow: '0 4px 15px rgba(6, 182, 212, 0.05)'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--accent-hover)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  ✨ ĐIỂM PHÙ HỢP CÁ NHÂN (AI)
-                </span>
-                <span style={{ fontSize: '1.15rem', fontWeight: '900', background: 'linear-gradient(135deg, var(--accent), var(--primary))', padding: '2px 10px', borderRadius: '20px', color: 'white' }}>
-                  {product.match_score}%
-                </span>
-              </div>
-              <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.4' }}>
-                {product.match_score >= 80 ? (
-                  <span>🚀 <strong>Độ tương thích cực kỳ cao!</strong> Phom dáng và size giày đề cử hoàn toàn phù hợp để nâng đỡ bàn chân của bạn thoải mái nhất.</span>
-                ) : product.match_score >= 60 ? (
-                  <span>⚠️ <strong>Phù hợp trung bình.</strong> Hãy chú ý chọn size cẩn thận. Do dáng chân hoặc kích cỡ của bạn lệch nhẹ so với phom chuẩn của đôi giày này.</span>
-                ) : (
-                  <span>❌ <strong>Tương thích kém.</strong> Đôi giày này có phom ôm hoặc size hiện có lệch nhiều so với kích thước chân đo được của bạn.</span>
-                )}
-              </p>
-            </div>
-          )}
-
-          {/* AI Banner prompt to measure foot if they haven't yet */}
-          {token && (product.match_score === undefined || product.match_score === null) && (
-            <div className="ai-match-prompt-card" style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px dashed var(--glass-border)',
-              borderRadius: '12px',
-              padding: '1rem',
-              marginBottom: '1.25rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '1rem'
-            }}>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <span style={{ fontSize: '1.5rem' }}>📏</span>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                  <strong style={{ color: 'var(--text-primary)' }}>Chưa biết đôi này có vừa không?</strong>
-                  <br />Đo size chân bằng AI ngay để hiển thị điểm tương thích cá nhân!
-                </div>
-              </div>
-              <Link to="/ai-measure" className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                Quét chân ngay ⚡
-              </Link>
-            </div>
-          )}
-
           {/* Size Select Option */}
           <div>
             <div className="size-header">

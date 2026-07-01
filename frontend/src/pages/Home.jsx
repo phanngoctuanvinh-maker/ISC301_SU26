@@ -37,6 +37,9 @@ function Home() {
   const [expandedCategory, setExpandedCategory] = useState('');
   const [selectedFeatured, setSelectedFeatured] = useState(false);
   const [selectedSportType, setSelectedSportType] = useState('');
+  const [selectedBrandLeft, setSelectedBrandLeft] = useState(0);
+  const [selectedBrandWidth, setSelectedBrandWidth] = useState(0);
+  const [selectedButtonEl, setSelectedButtonEl] = useState(null);
 
   const [portalTarget, setPortalTarget] = useState(null);
   const [searchPortalTarget, setSearchPortalTarget] = useState(null);
@@ -151,9 +154,55 @@ function Home() {
     setCurrentPage(1);
   };
 
-  const handleBrandSelect = (id) => {
-    setSelectedBrand(selectedBrand === id ? '' : id);
+  const updateDropdownPosition = useCallback(() => {
+    if (selectedButtonEl) {
+      const parent = selectedButtonEl.closest('.brands-bar-under-header');
+      if (parent) {
+        const rect = selectedButtonEl.getBoundingClientRect();
+        const parentRect = parent.getBoundingClientRect();
+        setSelectedBrandLeft(rect.left - parentRect.left);
+        setSelectedBrandWidth(rect.width);
+      }
+    }
+  }, [selectedButtonEl]);
+
+  useEffect(() => {
+    if (selectedBrand) {
+      updateDropdownPosition();
+    }
+  }, [selectedBrand, selectedButtonEl, updateDropdownPosition]);
+
+  useEffect(() => {
+    const track = brandScrollRef.current;
+    if (track && selectedBrand) {
+      track.addEventListener('scroll', updateDropdownPosition);
+      window.addEventListener('resize', updateDropdownPosition);
+      return () => {
+        track.removeEventListener('scroll', updateDropdownPosition);
+        window.removeEventListener('resize', updateDropdownPosition);
+      };
+    }
+  }, [selectedBrand, updateDropdownPosition]);
+
+  const handleBrandSelect = (id, event) => {
+    const isDeSelecting = selectedBrand === id;
+    setSelectedBrand(isDeSelecting ? '' : id);
     setCurrentPage(1);
+    if (!isDeSelecting && event && event.currentTarget) {
+      const button = event.currentTarget;
+      setSelectedButtonEl(button);
+      button.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      // Calculate coordinates immediately
+      const parent = button.closest('.brands-bar-under-header');
+      if (parent) {
+        const rect = button.getBoundingClientRect();
+        const parentRect = parent.getBoundingClientRect();
+        setSelectedBrandLeft(rect.left - parentRect.left);
+        setSelectedBrandWidth(rect.width);
+      }
+    } else {
+      setSelectedButtonEl(null);
+    }
   };
 
   const handleGenderSelect = (gender) => {
@@ -291,31 +340,82 @@ function Home() {
 
       {/* ─── Premium Brands Bar (under header) ────────────────────────────────── */}
       <div className="brands-bar-under-header">
-        <span className="brands-bar-label">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-          Thương hiệu
-        </span>
-        <div className="filter-scroll-container">
-          <button className="filter-scroll-btn left" onClick={() => scrollPills(brandScrollRef, -1)} aria-label="Cuộn trái">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
-          <div className="filter-pills-track" ref={brandScrollRef}>
-            <button 
-              className={`filter-pill brand ${!selectedBrand ? 'active' : ''}`} 
-              onClick={() => handleBrandSelect('')}
-            >
-              Tất cả
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+          <span className="brands-bar-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+            Thương hiệu
+          </span>
+          <div className="filter-scroll-container">
+            <button className="filter-scroll-btn left" onClick={() => scrollPills(brandScrollRef, -1)} aria-label="Cuộn trái">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
-            {brands.map(brand => (
-              <button key={brand.id} className={`filter-pill brand ${selectedBrand === brand.id ? 'active' : ''}`} onClick={() => handleBrandSelect(brand.id)}>
-                {brand.name}
+            <div className="filter-pills-track" ref={brandScrollRef}>
+              <button 
+                className={`filter-pill brand ${!selectedBrand ? 'active' : ''}`} 
+                onClick={(e) => handleBrandSelect('', e)}
+              >
+                Tất cả
+              </button>
+              {brands.map(brand => (
+                <button key={brand.id} className={`filter-pill brand ${selectedBrand === brand.id ? 'active' : ''}`} onClick={(e) => handleBrandSelect(brand.id, e)}>
+                  {brand.name}
+                </button>
+              ))}
+            </div>
+            <button className="filter-scroll-btn right" onClick={() => scrollPills(brandScrollRef, 1)} aria-label="Cuộn phải">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        {selectedBrand && (
+          <div className="brand-gender-dropdown" style={{ 
+            position: 'absolute',
+            top: '100%',
+            left: `${selectedBrandLeft + (selectedBrandWidth / 2)}px`,
+            transform: 'translateX(-50%)',
+            display: 'flex', 
+            gap: '0.4rem', 
+            padding: '0.5rem 0.8rem',
+            background: 'linear-gradient(135deg, hsla(262, 80%, 98%, 0.98), hsla(187, 90%, 98%, 0.98))',
+            backdropFilter: 'blur(10px)',
+            borderRadius: '12px',
+            border: '1.5px solid hsla(262, 83%, 58%, 0.18)',
+            boxShadow: '0 10px 25px rgba(262, 83%, 58%, 0.12)',
+            zIndex: 100,
+            animation: 'fadeInDown 0.2s ease',
+            whiteSpace: 'nowrap',
+            marginTop: '0.4rem'
+          }}>
+            {/* Arrow pointing up */}
+            <div style={{
+              position: 'absolute',
+              top: '-6px',
+              left: '50%',
+              transform: 'translateX(-50%) rotate(45deg)',
+              width: '10px',
+              height: '10px',
+              background: '#fcfaff',
+              borderLeft: '1.5px solid hsla(262, 83%, 58%, 0.18)',
+              borderTop: '1.5px solid hsla(262, 83%, 58%, 0.18)'
+            }} />
+
+            {[
+              { key: 'male',   label: '♂ Nam' },
+              { key: 'female', label: '♀ Nữ' },
+              { key: 'unisex', label: '⚡ Unisex' },
+            ].map(g => (
+              <button 
+                key={g.key} 
+                className={`filter-pill gender ${selectedGender === g.key ? 'active' : ''}`} 
+                onClick={() => handleGenderSelect(g.key)}
+                style={{ fontSize: '0.78rem', padding: '0.3rem 0.8rem' }}
+              >
+                {g.label}
               </button>
             ))}
           </div>
-          <button className="filter-scroll-btn right" onClick={() => scrollPills(brandScrollRef, 1)} aria-label="Cuộn phải">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-        </div>
+        )}
       </div>
 
       {/* ─── Banner Slider Section ─────────────────────────────────────────── */}
@@ -493,27 +593,8 @@ function Home() {
           </div>
         )}
 
-        {/* Row 4: Gender */}
-        <div className="filter-group-row">
-          <span className="filter-group-label">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
-            Giới tính
-          </span>
-          <div style={{ display: 'flex', gap: '0.4rem', padding: '3px 0' }}>
-            {[
-              { key: 'male',   label: '♂ Nam' },
-              { key: 'female', label: '♀ Nữ' },
-              { key: 'unisex', label: '⚡ Unisex' },
-            ].map(g => (
-              <button key={g.key} className={`filter-pill gender ${selectedGender === g.key ? 'active' : ''}`} onClick={() => handleGenderSelect(g.key)}>
-                {g.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Row: Sport Type */}
-        <div className="filter-group-row" style={{ marginTop: '0.5rem' }}>
+        <div className="filter-group-row">
           <span className="filter-group-label">
             🎯 Mục đích
           </span>
