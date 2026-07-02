@@ -36,10 +36,6 @@ function Home() {
   const [selectedSort, setSelectedSort] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedCategory, setExpandedCategory] = useState('');
-  const [selectedBrandLeft, setSelectedBrandLeft] = useState(0);
-  const [selectedBrandWidth, setSelectedBrandWidth] = useState(0);
-  const [selectedButtonEl, setSelectedButtonEl] = useState(null);
-  const [isBrandDropdownOpen, setIsBrandDropdownOpen] = useState(false);
 
   const [portalTarget, setPortalTarget] = useState(null);
   const [searchPortalTarget, setSearchPortalTarget] = useState(null);
@@ -60,13 +56,6 @@ function Home() {
           return;
         }
         setIsDropdownOpen(false);
-      }
-      
-      // Brand gender dropdown click outside
-      const brandDropdown = document.querySelector('.brand-gender-dropdown');
-      const brandPillTrack = document.querySelector('.filter-pills-track');
-      if (brandDropdown && !brandDropdown.contains(event.target) && brandPillTrack && !brandPillTrack.contains(event.target)) {
-        setIsBrandDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -171,63 +160,19 @@ function Home() {
     setCurrentPage(1);
   };
 
-  const updateDropdownPosition = useCallback(() => {
-    if (selectedButtonEl) {
-      const parent = selectedButtonEl.closest('.brands-bar-under-header');
-      if (parent) {
-        const rect = selectedButtonEl.getBoundingClientRect();
-        const parentRect = parent.getBoundingClientRect();
-        setSelectedBrandLeft(rect.left - parentRect.left);
-        setSelectedBrandWidth(rect.width);
-      }
-    }
-  }, [selectedButtonEl]);
-
-  useEffect(() => {
-    if (selectedBrand) {
-      updateDropdownPosition();
-    }
-  }, [selectedBrand, selectedButtonEl, updateDropdownPosition]);
-
-  useEffect(() => {
-    const track = brandScrollRef.current;
-    if (track && selectedBrand) {
-      track.addEventListener('scroll', updateDropdownPosition);
-      window.addEventListener('resize', updateDropdownPosition);
-      return () => {
-        track.removeEventListener('scroll', updateDropdownPosition);
-        window.removeEventListener('resize', updateDropdownPosition);
-      };
-    }
-  }, [selectedBrand, updateDropdownPosition]);
-
   const handleBrandSelect = (id, event) => {
     const isDeSelecting = selectedBrand === id;
     setSelectedBrand(isDeSelecting ? '' : id);
+    setSelectedGender(''); // Reset gender when brand changes
     setCurrentPage(1);
     if (!isDeSelecting && event && event.currentTarget) {
-      setIsBrandDropdownOpen(true);
-      const button = event.currentTarget;
-      setSelectedButtonEl(button);
-      button.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-      // Calculate coordinates immediately
-      const parent = button.closest('.brands-bar-under-header');
-      if (parent) {
-        const rect = button.getBoundingClientRect();
-        const parentRect = parent.getBoundingClientRect();
-        setSelectedBrandLeft(rect.left - parentRect.left);
-        setSelectedBrandWidth(rect.width);
-      }
-    } else {
-      setSelectedButtonEl(null);
-      setIsBrandDropdownOpen(false);
+      event.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
   };
 
   const handleGenderSelect = (gender) => {
     setSelectedGender(selectedGender === gender ? '' : gender);
     setCurrentPage(1);
-    setIsBrandDropdownOpen(false);
   };
 
   const handleSortSelect = (e) => {
@@ -356,7 +301,7 @@ function Home() {
       {/* ─── Premium Brands Bar (under header) ────────────────────────────────── */}
       <div className="brands-bar-under-header">
         <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-          <span className="brands-bar-label">
+          <span className="brands-bar-label" style={{ minWidth: '90px' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
             Thương hiệu
           </span>
@@ -396,9 +341,6 @@ function Home() {
                       />
                     )}
                     <span>Giày {brand.name}</span>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ transform: isSelected ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', opacity: 0.8 }}>
-                      <polyline points="6 9 12 15 18 9"/>
-                    </svg>
                   </button>
                 );
               })}
@@ -409,80 +351,41 @@ function Home() {
           </div>
         </div>
 
-        {selectedBrand && isBrandDropdownOpen && (() => {
-          const activeBrand = brands.find(b => b.id === selectedBrand);
-          if (!activeBrand) return null;
-          return (
-            <div className="brand-gender-dropdown" style={{ 
-              position: 'absolute',
-              top: '100%',
-              left: `${selectedBrandLeft}px`,
-              display: 'flex', 
-              flexDirection: 'column',
-              width: '180px',
-              background: '#ffffff',
-              borderRadius: '0 0 8px 8px',
-              borderTop: '3px solid var(--primary)',
-              borderLeft: '1px solid hsla(262, 83%, 58%, 0.15)',
-              borderRight: '1px solid hsla(262, 83%, 58%, 0.15)',
-              borderBottom: '1px solid hsla(262, 83%, 58%, 0.15)',
-              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.08)',
-              zIndex: 100,
-              animation: 'fadeInDown 0.2s ease',
-              overflow: 'hidden',
-              marginTop: '0.4rem'
-            }}>
-              {[
-                { key: 'male',   label: `Giày ${activeBrand.name} Nam` },
-                { key: 'female', label: `Giày ${activeBrand.name} Nữ` },
-                { key: 'unisex', label: `Giày ${activeBrand.name} Unisex` },
-              ].map(g => {
-                const isGenderActive = selectedGender === g.key;
-                return (
-                  <button 
-                    key={g.key} 
-                    onClick={() => handleGenderSelect(g.key)}
-                    style={{ 
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '0.65rem 1rem',
-                      background: isGenderActive ? 'hsla(262, 83%, 58%, 0.06)' : 'transparent',
-                      border: 'none',
-                      color: isGenderActive ? 'var(--primary)' : 'var(--text-secondary)',
-                      fontFamily: 'inherit',
-                      fontSize: '0.85rem',
-                      fontWeight: isGenderActive ? '600' : '500',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                      width: '100%'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isGenderActive) {
-                        e.currentTarget.style.background = '#f8fafc';
-                        e.currentTarget.style.color = 'var(--primary)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isGenderActive) {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--text-secondary)';
-                      }
-                    }}
-                  >
-                    <span>{g.label}</span>
-                    {isGenderActive && (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ color: 'var(--primary)' }}>
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                    )}
-                  </button>
-                );
-              })}
+        {/* ─── Premium Gender/Loại Giày Bar (always visible) ──────────────────── */}
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%', borderTop: '1px dashed hsla(262, 60%, 85%, 0.2)', paddingTop: '0.75rem' }}>
+          <span className="brands-bar-label" style={{ minWidth: '90px' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Loại giày
+          </span>
+          <div className="filter-scroll-container">
+            <div className="filter-pills-track">
+              <button 
+                className={`filter-pill gender ${!selectedGender ? 'active' : ''}`} 
+                onClick={() => handleGenderSelect('')}
+              >
+                Tất cả
+              </button>
+              <button 
+                className={`filter-pill gender ${selectedGender === 'male' ? 'active' : ''}`} 
+                onClick={() => handleGenderSelect('male')}
+              >
+                ♂ Giày Nam
+              </button>
+              <button 
+                className={`filter-pill gender ${selectedGender === 'female' ? 'active' : ''}`} 
+                onClick={() => handleGenderSelect('female')}
+              >
+                ♀ Giày Nữ
+              </button>
+              <button 
+                className={`filter-pill gender ${selectedGender === 'unisex' ? 'active' : ''}`} 
+                onClick={() => handleGenderSelect('unisex')}
+              >
+                ⚡ Giày Unisex
+              </button>
             </div>
-          );
-        })()}
+          </div>
+        </div>
       </div>
 
       {/* ─── Banner Slider Section ─────────────────────────────────────────── */}
@@ -579,7 +482,7 @@ function Home() {
         <div className="brand-page-layout">
           {/* Breadcrumb */}
           <div className="breadcrumb-nav">
-            <span onClick={() => { setSelectedBrand(''); setCurrentPage(1); setSelectedButtonEl(null); }} style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <span onClick={() => { setSelectedBrand(''); setSelectedGender(''); setCurrentPage(1); }} style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ display: 'block' }}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
               Trang chủ
             </span>

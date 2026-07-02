@@ -22,15 +22,26 @@ function AiAssistant() {
   const [loading, setLoading] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   
-  const messagesEndRef = useRef(null);
-
+  const chatContainerRef = useRef(null);
+ 
   // Cuộn xuống tin nhắn mới nhất
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   };
-
+ 
   useEffect(() => {
-    scrollToBottom();
+    window.scrollTo(0, 0);
+  }, []);
+ 
+  useEffect(() => {
+    if (messages.length > 1) {
+      scrollToBottom();
+    }
   }, [messages]);
 
   // Tải hồ sơ size chân của User nếu đã đăng nhập
@@ -144,7 +155,7 @@ function AiAssistant() {
       <div className="chat-window-wrapper glass-card flex flex-col" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', padding: 0 }}>
         
         {/* Chat window body */}
-        <div className="chat-messages-container" style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div ref={chatContainerRef} className="chat-messages-container" style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {messages.map((msg) => (
             <div key={msg.id} className={`message-bubble-wrapper ${msg.sender === 'user' ? 'user' : 'ai'}`}>
               <div className="message-sender-avatar">
@@ -219,7 +230,7 @@ function AiAssistant() {
               </div>
             </div>
           )}
-          <div ref={messagesEndRef} />
+
         </div>
 
         {/* Quick Survey Prompts (Chỉ hiển thị khi không đang tải và ở các bước đầu) */}
