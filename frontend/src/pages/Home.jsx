@@ -5,6 +5,7 @@ import ProductCard from '../components/ProductCard';
 import './Home.css';
 
 
+
 function Home() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -35,11 +36,10 @@ function Home() {
   const [selectedSort, setSelectedSort] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedCategory, setExpandedCategory] = useState('');
-  const [selectedFeatured, setSelectedFeatured] = useState(false);
-  const [selectedSportType, setSelectedSportType] = useState('');
   const [selectedBrandLeft, setSelectedBrandLeft] = useState(0);
   const [selectedBrandWidth, setSelectedBrandWidth] = useState(0);
   const [selectedButtonEl, setSelectedButtonEl] = useState(null);
+  const [isBrandDropdownOpen, setIsBrandDropdownOpen] = useState(false);
 
   const [portalTarget, setPortalTarget] = useState(null);
   const [searchPortalTarget, setSearchPortalTarget] = useState(null);
@@ -53,13 +53,20 @@ function Home() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Check if it's clicking on the trigger button itself to avoid double toggling
+      // Check if it's clicking on the category trigger button itself to avoid double toggling
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         const trigger = document.querySelector('.nav-category-trigger-btn');
         if (trigger && trigger.contains(event.target)) {
           return;
         }
         setIsDropdownOpen(false);
+      }
+      
+      // Brand gender dropdown click outside
+      const brandDropdown = document.querySelector('.brand-gender-dropdown');
+      const brandPillTrack = document.querySelector('.filter-pills-track');
+      if (brandDropdown && !brandDropdown.contains(event.target) && brandPillTrack && !brandPillTrack.contains(event.target)) {
+        setIsBrandDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -69,6 +76,15 @@ function Home() {
   useEffect(() => {
     fetchBanners();
     fetchCatalogs();
+
+    const handleLogoClick = (e) => {
+      const logo = e.target.closest('.logo-text');
+      if (logo) {
+        handleClearFilters();
+      }
+    };
+    document.addEventListener('click', handleLogoClick);
+    return () => document.removeEventListener('click', handleLogoClick);
   }, []);
 
   // Auto-play banner slider
@@ -99,7 +115,7 @@ function Home() {
 
   useEffect(() => {
     fetchProducts();
-  }, [activeSearch, selectedCategory, selectedBrand, selectedGender, selectedSort, currentPage, selectedFeatured, selectedSportType]);
+  }, [activeSearch, selectedCategory, selectedBrand, selectedGender, selectedSort, currentPage]);
 
   const fetchCatalogs = async () => {
     try {
@@ -120,18 +136,19 @@ function Home() {
       setError('');
       const params = {
         page: currentPage,
-        limit: 8,
-        sort: selectedSort
+        limit: 8
       };
+
+      if (selectedSort === 'featured') {
+        params.featured = 'true';
+      } else {
+        params.sort = selectedSort;
+      }
 
       if (activeSearch.trim()) params.search = activeSearch.trim();
       if (selectedCategory) params.category_id = selectedCategory;
       if (selectedBrand) params.brand_id = selectedBrand;
       if (selectedGender) params.gender = selectedGender;
-      if (selectedFeatured) params.featured = 'true';
-      if (selectedSportType) {
-        params.sport_type = selectedSportType;
-      }
 
       const response = await api.get('/products', { params });
       setProducts(response.data?.items || []);
@@ -189,6 +206,7 @@ function Home() {
     setSelectedBrand(isDeSelecting ? '' : id);
     setCurrentPage(1);
     if (!isDeSelecting && event && event.currentTarget) {
+      setIsBrandDropdownOpen(true);
       const button = event.currentTarget;
       setSelectedButtonEl(button);
       button.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -202,17 +220,14 @@ function Home() {
       }
     } else {
       setSelectedButtonEl(null);
+      setIsBrandDropdownOpen(false);
     }
   };
 
   const handleGenderSelect = (gender) => {
     setSelectedGender(selectedGender === gender ? '' : gender);
     setCurrentPage(1);
-  };
-
-  const handleSportTypeSelect = (sportType) => {
-    setSelectedSportType(selectedSportType === sportType ? '' : sportType);
-    setCurrentPage(1);
+    setIsBrandDropdownOpen(false);
   };
 
   const handleSortSelect = (e) => {
@@ -235,11 +250,9 @@ function Home() {
     setSelectedSort('newest');
     setCurrentPage(1);
     setExpandedCategory('');
-    setSelectedFeatured(false);
-    setSelectedSportType('');
   };
 
-  const hasActiveFilters = activeSearch || selectedCategory || selectedBrand || selectedGender || selectedSort !== 'newest' || selectedFeatured || selectedSportType;
+  const hasActiveFilters = activeSearch || selectedCategory || selectedBrand || selectedGender || selectedSort !== 'newest';
 
   // Flatten categories for filter bar
   const flatCategories = categories.reduce((acc, cat) => {
@@ -247,6 +260,8 @@ function Home() {
     if (cat.children) acc.push(...cat.children);
     return acc;
   }, []);
+
+  const activeBrand = brands.find(b => b.id === selectedBrand);
 
   return (
     <div className="container home-page-container" style={{ padding: '0 1.5rem', display: 'flex', flexDirection: 'column' }}>
@@ -356,11 +371,37 @@ function Home() {
               >
                 Tất cả
               </button>
-              {brands.map(brand => (
-                <button key={brand.id} className={`filter-pill brand ${selectedBrand === brand.id ? 'active' : ''}`} onClick={(e) => handleBrandSelect(brand.id, e)}>
-                  {brand.name}
-                </button>
-              ))}
+              {brands.map(brand => {
+                const isSelected = selectedBrand === brand.id;
+                return (
+                  <button 
+                    key={brand.id} 
+                    className={`filter-pill brand ${isSelected ? 'active' : ''}`} 
+                    onClick={(e) => handleBrandSelect(brand.id, e)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                  >
+                    {brand.logo_url && (
+                      <img 
+                        src={brand.logo_url} 
+                        alt={brand.name} 
+                        style={{ 
+                          width: '18px', 
+                          height: '18px', 
+                          objectFit: 'contain',
+                          borderRadius: '4px',
+                          filter: isSelected ? 'brightness(0) invert(1)' : 'none',
+                          transition: 'filter 0.2s'
+                        }} 
+                        onError={e => { e.target.style.display = 'none'; }}
+                      />
+                    )}
+                    <span>Giày {brand.name}</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ transform: isSelected ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', opacity: 0.8 }}>
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </button>
+                );
+              })}
             </div>
             <button className="filter-scroll-btn right" onClick={() => scrollPills(brandScrollRef, 1)} aria-label="Cuộn phải">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
@@ -368,343 +409,398 @@ function Home() {
           </div>
         </div>
 
-        {selectedBrand && (
-          <div className="brand-gender-dropdown" style={{ 
-            position: 'absolute',
-            top: '100%',
-            left: `${selectedBrandLeft + (selectedBrandWidth / 2)}px`,
-            transform: 'translateX(-50%)',
-            display: 'flex', 
-            gap: '0.4rem', 
-            padding: '0.5rem 0.8rem',
-            background: 'linear-gradient(135deg, hsla(262, 80%, 98%, 0.98), hsla(187, 90%, 98%, 0.98))',
-            backdropFilter: 'blur(10px)',
-            borderRadius: '12px',
-            border: '1.5px solid hsla(262, 83%, 58%, 0.18)',
-            boxShadow: '0 10px 25px rgba(262, 83%, 58%, 0.12)',
-            zIndex: 100,
-            animation: 'fadeInDown 0.2s ease',
-            whiteSpace: 'nowrap',
-            marginTop: '0.4rem'
-          }}>
-            {/* Arrow pointing up */}
-            <div style={{
+        {selectedBrand && isBrandDropdownOpen && (() => {
+          const activeBrand = brands.find(b => b.id === selectedBrand);
+          if (!activeBrand) return null;
+          return (
+            <div className="brand-gender-dropdown" style={{ 
               position: 'absolute',
-              top: '-6px',
-              left: '50%',
-              transform: 'translateX(-50%) rotate(45deg)',
-              width: '10px',
-              height: '10px',
-              background: '#fcfaff',
-              borderLeft: '1.5px solid hsla(262, 83%, 58%, 0.18)',
-              borderTop: '1.5px solid hsla(262, 83%, 58%, 0.18)'
-            }} />
-
-            {[
-              { key: 'male',   label: '♂ Nam' },
-              { key: 'female', label: '♀ Nữ' },
-              { key: 'unisex', label: '⚡ Unisex' },
-            ].map(g => (
-              <button 
-                key={g.key} 
-                className={`filter-pill gender ${selectedGender === g.key ? 'active' : ''}`} 
-                onClick={() => handleGenderSelect(g.key)}
-                style={{ fontSize: '0.78rem', padding: '0.3rem 0.8rem' }}
-              >
-                {g.label}
-              </button>
-            ))}
-          </div>
-        )}
+              top: '100%',
+              left: `${selectedBrandLeft}px`,
+              display: 'flex', 
+              flexDirection: 'column',
+              width: '180px',
+              background: '#ffffff',
+              borderRadius: '0 0 8px 8px',
+              borderTop: '3px solid var(--primary)',
+              borderLeft: '1px solid hsla(262, 83%, 58%, 0.15)',
+              borderRight: '1px solid hsla(262, 83%, 58%, 0.15)',
+              borderBottom: '1px solid hsla(262, 83%, 58%, 0.15)',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.08)',
+              zIndex: 100,
+              animation: 'fadeInDown 0.2s ease',
+              overflow: 'hidden',
+              marginTop: '0.4rem'
+            }}>
+              {[
+                { key: 'male',   label: `Giày ${activeBrand.name} Nam` },
+                { key: 'female', label: `Giày ${activeBrand.name} Nữ` },
+                { key: 'unisex', label: `Giày ${activeBrand.name} Unisex` },
+              ].map(g => {
+                const isGenderActive = selectedGender === g.key;
+                return (
+                  <button 
+                    key={g.key} 
+                    onClick={() => handleGenderSelect(g.key)}
+                    style={{ 
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.65rem 1rem',
+                      background: isGenderActive ? 'hsla(262, 83%, 58%, 0.06)' : 'transparent',
+                      border: 'none',
+                      color: isGenderActive ? 'var(--primary)' : 'var(--text-secondary)',
+                      fontFamily: 'inherit',
+                      fontSize: '0.85rem',
+                      fontWeight: isGenderActive ? '600' : '500',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      width: '100%'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isGenderActive) {
+                        e.currentTarget.style.background = '#f8fafc';
+                        e.currentTarget.style.color = 'var(--primary)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isGenderActive) {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                      }
+                    }}
+                  >
+                    <span>{g.label}</span>
+                    {isGenderActive && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ color: 'var(--primary)' }}>
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
 
       {/* ─── Banner Slider Section ─────────────────────────────────────────── */}
-      {banners.length > 0 ? (
-        <section className="home-banner-slider">
-          {/* Slides */}
-          <div className="slider-track">
-            {banners.map((banner, i) => (
-              <div
-                key={banner.id}
-                className={`slider-slide ${i === activeSlide ? 'active' : ''}`}
-                onClick={() => {
-                  if (banner.link_type === 'url' && banner.link_url) window.open(banner.link_url, '_blank');
-                }}
-                style={{ cursor: banner.link_type !== 'none' ? 'pointer' : 'default' }}
-              >
-                <img
-                  src={banner.image_url}
-                  alt={banner.title || `Banner ${i + 1}`}
-                  className="slider-img"
-                  onError={e => { e.target.src = ''; e.target.style.display = 'none'; }}
-                />
-                {banner.title && (
-                  <div className="slider-caption">
-                    <h2 className="slider-caption-title">{banner.title}</h2>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Arrow controls */}
-          {banners.length > 1 && (
-            <>
-              <button
-                className="slider-arrow slider-arrow--prev"
-                onClick={() => goToSlide((activeSlide - 1 + banners.length) % banners.length)}
-                aria-label="Trước"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-              </button>
-              <button
-                className="slider-arrow slider-arrow--next"
-                onClick={() => goToSlide((activeSlide + 1) % banners.length)}
-                aria-label="Tiếp"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-              </button>
-            </>
-          )}
-
-          {/* Dots */}
-          {banners.length > 1 && (
-            <div className="slider-dots">
-              {banners.map((_, i) => (
-                <button
-                  key={i}
-                  className={`slider-dot ${i === activeSlide ? 'active' : ''}`}
-                  onClick={() => goToSlide(i)}
-                  aria-label={`Slide ${i + 1}`}
-                />
+      {!selectedBrand && (
+        banners.length > 0 ? (
+          <section className="home-banner-slider">
+            {/* Slides */}
+            <div className="slider-track">
+              {banners.map((banner, i) => (
+                <div
+                  key={banner.id}
+                  className={`slider-slide ${i === activeSlide ? 'active' : ''}`}
+                  onClick={() => {
+                    if (banner.link_type === 'url' && banner.link_url) window.open(banner.link_url, '_blank');
+                  }}
+                  style={{ cursor: banner.link_type !== 'none' ? 'pointer' : 'default' }}
+                >
+                  <img
+                    src={banner.image_url}
+                    alt={banner.title || `Banner ${i + 1}`}
+                    className="slider-img"
+                    onError={e => { e.target.src = ''; e.target.style.display = 'none'; }}
+                  />
+                  {banner.title && (
+                    <div className="slider-caption">
+                      <h2 className="slider-caption-title">{banner.title}</h2>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
-          )}
 
-          {/* Slide counter */}
-          {banners.length > 1 && (
-            <span className="slider-counter">{activeSlide + 1} / {banners.length}</span>
-          )}
-        </section>
-      ) : (
-        /* Fallback static hero nếu chưa có banner nào */
-        <section className="home-hero-banner">
-          <div className="home-hero-content">
-            <h1 className="home-hero-title">BƯỚC CHÂN KIÊN ĐỊNH</h1>
-            <p className="home-hero-subtitle">
-              Khám phá bộ sưu tập giày thể thao và phụ kiện chính hãng mới nhất. Thiết kế tối ưu cho hiệu suất tập luyện và phong cách thời trang năng động hàng ngày.
-            </p>
-            <button
-              onClick={() => window.scrollTo({ top: 550, behavior: 'smooth' })}
-              className="btn btn-primary"
-              style={{ padding: '0.85rem 2rem' }}
-            >
-              Mua Ngay →
-            </button>
-          </div>
-        </section>
+            {/* Arrow controls */}
+            {banners.length > 1 && (
+              <>
+                <button
+                  className="slider-arrow slider-arrow--prev"
+                  onClick={() => goToSlide((activeSlide - 1 + banners.length) % banners.length)}
+                  aria-label="Trước"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <button
+                  className="slider-arrow slider-arrow--next"
+                  onClick={() => goToSlide((activeSlide + 1) % banners.length)}
+                  aria-label="Tiếp"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </>
+            )}
+
+            {/* Dots */}
+            {banners.length > 1 && (
+              <div className="slider-dots">
+                {banners.map((_, i) => (
+                  <button
+                    key={i}
+                    className={`slider-dot ${i === activeSlide ? 'active' : ''}`}
+                    onClick={() => goToSlide(i)}
+                    aria-label={`Slide ${i + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Slide counter */}
+            {banners.length > 1 && (
+              <span className="slider-counter">{activeSlide + 1} / {banners.length}</span>
+            )}
+          </section>
+        ) : (
+          /* Fallback static hero nếu chưa có banner nào */
+          <section className="home-hero-banner">
+            <div className="home-hero-content">
+              <h1 className="home-hero-title">BƯỚC CHÂN KIÊN ĐỊNH</h1>
+              <p className="home-hero-subtitle">
+                Khám phá bộ sưu tập giày thể thao và phụ kiện chính hãng mới nhất. Thiết kế tối ưu cho hiệu suất tập luyện và phong cách thời trang năng động hàng ngày.
+              </p>
+              <button
+                onClick={() => window.scrollTo({ top: 550, behavior: 'smooth' })}
+                className="btn btn-primary"
+                style={{ padding: '0.85rem 2rem' }}
+              >
+                Mua Ngay →
+              </button>
+            </div>
+          </section>
+        )
       )}
 
       {/* ─── Main Layout ───────────────────────────────────────────────────── */}
-      <div className="home-layout-wrapper" style={{ width: '100%' }}>
-        <div className="home-main-content" style={{ width: '100%' }}>
-
-
-
-      {/* ─── Premium Filter Bar ──────────────────────────────────────────── */}
-      <div className="filter-bar-wrap">
-
-        {/* Row 1: Sort + Count + Clear */}
-        <div className="filter-bar-top">
-
-          {/* Sort */}
-          <div className="filter-sort-wrap">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="11" y2="18"/></svg>
-            <select value={selectedSort} onChange={handleSortSelect} className="filter-sort-select">
-              <option value="newest">Mới nhất</option>
-              <option value="popular">Bán chạy nhất</option>
-              <option value="price_asc">Giá: Thấp → Cao</option>
-              <option value="price_desc">Giá: Cao → Thấp</option>
-              <option value="name_asc">Tên: A → Z</option>
-              <option value="name_desc">Tên: Z → A</option>
-            </select>
+      {selectedBrand ? (
+        <div className="brand-page-layout">
+          {/* Breadcrumb */}
+          <div className="breadcrumb-nav">
+            <span onClick={() => { setSelectedBrand(''); setCurrentPage(1); setSelectedButtonEl(null); }} style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ display: 'block' }}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              Trang chủ
+            </span>
+            <span className="separator">/</span>
+            <span className="current">Giày {activeBrand?.name} Chính Hãng</span>
           </div>
 
-          {/* Count badge */}
-          <div className="filter-result-count">
-            <span className="filter-count-num">{pagination.total}</span> sản phẩm
-          </div>
-
-          {/* Clear all */}
-          {hasActiveFilters && (
-            <button onClick={handleClearFilters} className="filter-clear-btn">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              Xóa tất cả
-            </button>
-          )}
-        </div>
-
-        {/* Active filter chips */}
-        {hasActiveFilters && (
-          <div className="filter-active-chips">
-            <span className="active-chip-label">Đang lọc:</span>
-            {activeSearch && (
-              <button className="active-chip" onClick={() => { setSearchVal(''); setActiveSearch(''); setCurrentPage(1); }}>
-                🔍 "{activeSearch}" <span className="active-chip-x">×</span>
-              </button>
-            )}
-            {selectedCategory && (() => {
-              const cat = flatCategories.find(c => c.id === selectedCategory);
-              return cat ? (
-                <button className="active-chip" onClick={() => handleCategorySelect(selectedCategory)}>
-                  📂 {cat.name} <span className="active-chip-x">×</span>
-                </button>
-              ) : null;
-            })()}
-            {selectedBrand && (() => {
-              const brand = brands.find(b => b.id === selectedBrand);
-              return brand ? (
-                <button className="active-chip" style={{ background: 'linear-gradient(135deg, hsl(38,92%,45%), hsl(25,90%,55%))' }} onClick={() => handleBrandSelect(selectedBrand)}>
-                  🏷 {brand.name} <span className="active-chip-x">×</span>
-                </button>
-              ) : null;
-            })()}
-            {selectedGender && (
-              <button className="active-chip" style={{ background: 'linear-gradient(135deg, hsl(280,80%,60%), hsl(187,92%,46%))' }} onClick={() => handleGenderSelect(selectedGender)}>
-                {selectedGender === 'male' ? '♂ Nam' : selectedGender === 'female' ? '♀ Nữ' : '⚡ Unisex'} <span className="active-chip-x">×</span>
-              </button>
-            )}
-            {selectedFeatured && (
-              <button className="active-chip" style={{ background: 'linear-gradient(135deg, hsl(38,92%,45%), hsl(25,90%,55%))' }} onClick={() => { setSelectedFeatured(false); setCurrentPage(1); }}>
-                ⭐ Nổi bật <span className="active-chip-x">×</span>
-              </button>
-            )}
-            {selectedSportType && (
-              <button className="active-chip" style={{ background: 'linear-gradient(135deg, hsl(150,80%,40%), hsl(160,90%,50%))' }} onClick={() => { setSelectedSportType(''); setCurrentPage(1); }}>
-                🎯 Mục đích: {
-                  selectedSportType === 'running' ? 'Chạy bộ' :
-                  selectedSportType === 'football' ? 'Đá bóng' :
-                  selectedSportType === 'basketball' ? 'Bóng rổ' :
-                  selectedSportType === 'training' ? 'Tập luyện' :
-                  selectedSportType === 'tennis' ? 'Tennis' : selectedSportType
-                } <span className="active-chip-x">×</span>
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Row: Sport Type */}
-        <div className="filter-group-row">
-          <span className="filter-group-label">
-            🎯 Mục đích
-          </span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', padding: '3px 0' }}>
-            {[
-              { key: 'running',    label: '👟 Chạy bộ' },
-              { key: 'football',   label: '⚽ Đá bóng' },
-              { key: 'basketball', label: '🏀 Bóng rổ' },
-              { key: 'training',   label: '🏋️‍♂️ Tập luyện' },
-              { key: 'tennis',     label: '🎾 Tennis' }
-            ].map(item => (
-              <button 
-                key={item.key} 
-                className={`filter-pill ${selectedSportType === item.key ? 'active' : ''}`} 
-                onClick={() => handleSportTypeSelect(item.key)}
-                style={{
-                  background: selectedSportType === item.key ? 'linear-gradient(135deg, hsl(150,80%,40%), hsl(160,90%,50%))' : 'none',
-                  borderColor: selectedSportType === item.key ? 'transparent' : 'var(--glass-border)',
-                  color: selectedSportType === item.key ? '#fff' : 'inherit'
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Row 5: Special Filters */}
-        <div className="filter-group-row" style={{ marginTop: '0.5rem' }}>
-          <span className="filter-group-label">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            Đặc biệt
-          </span>
-          <div style={{ display: 'flex', gap: '0.4rem', padding: '3px 0' }}>
-            <button 
-              className={`filter-pill ${selectedFeatured ? 'active' : ''}`}
-              onClick={() => {
-                setSelectedFeatured(!selectedFeatured);
-                setCurrentPage(1);
-              }}
-              style={{
-                background: selectedFeatured ? 'linear-gradient(135deg, hsl(38,92%,45%), hsl(25,90%,55%))' : 'none',
-                borderColor: selectedFeatured ? 'transparent' : 'var(--glass-border)',
-                color: selectedFeatured ? '#fff' : 'inherit'
-              }}
-            >
-              ⭐ Sản phẩm nổi bật
-            </button>
-          </div>
-        </div>
-
-      </div>
-
-      {/* ─── Products Grid ──────────────────────────────────────────────────── */}
-      <div style={{ marginBottom: '4rem' }}>
-        {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
-            <h3 style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Đang tải danh sách sản phẩm...</h3>
-          </div>
-        ) : error ? (
-          <div className="alert alert-danger">{error}</div>
-        ) : products.length === 0 ? (
-          <div className="glass-card" style={{ textAlign: 'center', padding: '5rem 3rem', border: '1px dashed var(--glass-border)' }}>
-            <h3 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '1.2rem' }}>Không tìm thấy sản phẩm</h3>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.95rem' }}>
-              Vui lòng đổi từ khóa hoặc xóa bớt các bộ lọc đang chọn.
-            </p>
-            <button onClick={handleClearFilters} className="btn btn-secondary" style={{ fontSize: '0.9rem', padding: '0.5rem 1.25rem' }}>
-              Thiết lập lại bộ lọc
-            </button>
-          </div>
-        ) : (
-          <>
-            {/* Products Grid */}
-            <div className="products-display-grid">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {pagination.totalPages > 1 && (
-              <div className="pagination-bar">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="btn btn-secondary"
-                  style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
-                >
-                  ← Trang trước
-                </button>
-                <span className="pagination-info" style={{ fontSize: '0.9rem' }}>
-                  Trang {currentPage} / {pagination.totalPages}
+          <div className="brand-page-grid">
+            {/* Left Sidebar Filter */}
+            <aside className="brand-sidebar-filter">
+              <div className="sidebar-header">
+                <span className="sidebar-title">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                  BỘ LỌC
                 </span>
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === pagination.totalPages}
-                  className="btn btn-secondary"
-                  style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
-                >
-                  Trang sau →
-                </button>
+                {hasActiveFilters && (
+                  <button onClick={handleClearFilters} className="sidebar-clear-btn">Xóa lọc</button>
+                )}
               </div>
-            )}
-          </>
-        )}
-      </div>
 
-        </div> {/* End of Main Content */}
-      </div> {/* End of Layout Wrapper */}
+              {/* Price filter section */}
+              <div className="sidebar-section">
+                <h4 className="section-title">Khoảng giá (VNĐ)</h4>
+                <div className="price-inputs">
+                  <input type="text" placeholder="Từ" className="price-input" />
+                  <span className="price-separator">-</span>
+                  <input type="text" placeholder="Đến" className="price-input" />
+                </div>
+              </div>
+
+              {/* Size filter section */}
+              <div className="sidebar-section">
+                <h4 className="section-title">Kích cỡ (Size)</h4>
+                <div className="size-grid">
+                  {['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'].map(size => (
+                    <button key={size} className="size-btn">{size}</button>
+                  ))}
+                </div>
+              </div>
+
+              <button className="apply-filter-btn">ÁP DỤNG BỘ LỌC</button>
+            </aside>
+
+            {/* Right main panel */}
+            <main className="brand-main-panel">
+              <h1 className="brand-heading-title">GIÀY {activeBrand?.name?.toUpperCase()} CHÍNH HÃNG</h1>
+
+              {/* Brand Promo Banner */}
+              <div className="brand-promo-banner">
+                <div className="brand-promo-content">
+                  <span className="promo-tag">COLLABORATION</span>
+                  <h2>MYSHOES × {activeBrand?.name?.toUpperCase()}</h2>
+                  <p>Trải nghiệm đẳng cấp thời trang và công nghệ tối ưu trên từng bước chạy</p>
+                </div>
+              </div>
+
+              <div className="brand-toolbar">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  {/* Sort */}
+                  <div className="filter-sort-wrap">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="11" y2="18"/></svg>
+                    <select value={selectedSort} onChange={handleSortSelect} className="filter-sort-select">
+                      <option value="newest">Mới nhất</option>
+                      <option value="featured">Sản phẩm nổi bật</option>
+                      <option value="popular">Bán chạy nhất</option>
+                      <option value="price_asc">Giá: Thấp → Cao</option>
+                      <option value="price_desc">Giá: Cao → Thấp</option>
+                      <option value="name_asc">Tên: A → Z</option>
+                      <option value="name_desc">Tên: Z → A</option>
+                    </select>
+                  </div>
+                  {/* Count badge */}
+                  <div className="filter-result-count">
+                    <span className="filter-count-num">{pagination.total}</span> sản phẩm
+                  </div>
+                </div>
+              </div>
+
+              {/* Active filter chips (if any other filter is active) */}
+              {hasActiveFilters && (
+                <div className="filter-active-chips" style={{ border: 'none', padding: '0 0 1rem 0' }}>
+                  <span className="active-chip-label">Đang lọc:</span>
+                  {activeSearch && (
+                    <button className="active-chip" onClick={() => { setSearchVal(''); setActiveSearch(''); setCurrentPage(1); }}>
+                      🔍 "{activeSearch}" <span className="active-chip-x">×</span>
+                    </button>
+                  )}
+                  {selectedCategory && (() => {
+                    const cat = flatCategories.find(c => c.id === selectedCategory);
+                    return cat ? (
+                      <button className="active-chip" onClick={() => handleCategorySelect(selectedCategory)}>
+                        📂 {cat.name} <span className="active-chip-x">×</span>
+                      </button>
+                    ) : null;
+                  })()}
+                  {selectedGender && (
+                    <button className="active-chip" style={{ background: 'linear-gradient(135deg, hsl(280,80%,60%), hsl(187,92%,46%))' }} onClick={() => handleGenderSelect(selectedGender)}>
+                      {selectedGender === 'male' ? '♂ Nam' : selectedGender === 'female' ? '♀ Nữ' : '⚡ Unisex'} <span className="active-chip-x">×</span>
+                    </button>
+                  )}
+                  {selectedSort === 'featured' && (
+                    <button className="active-chip" style={{ background: 'linear-gradient(135deg, hsl(38,92%,45%), hsl(25,90%,55%))' }} onClick={() => { setSelectedSort('newest'); setCurrentPage(1); }}>
+                      ⭐ Nổi bật <span className="active-chip-x">×</span>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Products Display */}
+              <div style={{ marginBottom: '4rem' }}>
+                {loading ? (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
+                    <h3 style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Đang tải danh sách sản phẩm...</h3>
+                  </div>
+                ) : error ? (
+                  <div className="alert alert-danger">{error}</div>
+                ) : products.length === 0 ? (
+                  <div className="glass-card" style={{ textAlign: 'center', padding: '5rem 3rem', border: '1px dashed var(--glass-border)' }}>
+                    <h3 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '1.2rem' }}>Không tìm thấy sản phẩm</h3>
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.95rem' }}>
+                      Vui lòng đổi từ khóa hoặc xóa bớt các bộ lọc đang chọn.
+                    </p>
+                    <button onClick={handleClearFilters} className="btn btn-secondary" style={{ fontSize: '0.9rem', padding: '0.5rem 1.25rem' }}>
+                      Thiết lập lại bộ lọc
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="products-display-grid">
+                      {products.map((product) => (
+                        <ProductCard key={product.id} product={product} />
+                      ))}
+                    </div>
+
+                    {pagination.totalPages > 1 && (
+                      <div className="pagination-bar">
+                        <button
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
+                        >
+                          ← Trang trước
+                        </button>
+                        <span className="pagination-info" style={{ fontSize: '0.9rem' }}>
+                          Trang {currentPage} / {pagination.totalPages}
+                        </span>
+                        <button
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === pagination.totalPages}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
+                        >
+                          Trang sau →
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </main>
+          </div>
+        </div>
+      ) : (
+        <div className="home-layout-wrapper" style={{ width: '100%' }}>
+          <div className="home-main-content" style={{ width: '100%' }}>
+            {/* Products Grid */}
+            <div style={{ marginBottom: '4rem' }}>
+              {loading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
+                  <h3 style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Đang tải danh sách sản phẩm...</h3>
+                </div>
+              ) : error ? (
+                <div className="alert alert-danger">{error}</div>
+              ) : products.length === 0 ? (
+                <div className="glass-card" style={{ textAlign: 'center', padding: '5rem 3rem', border: '1px dashed var(--glass-border)' }}>
+                  <h3 style={{ marginBottom: '0.5rem', color: 'var(--text-primary)', fontSize: '1.2rem' }}>Không tìm thấy sản phẩm</h3>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.95rem' }}>
+                    Vui lòng đổi từ khóa hoặc xóa bớt các bộ lọc đang chọn.
+                  </p>
+                  <button onClick={handleClearFilters} className="btn btn-secondary" style={{ fontSize: '0.9rem', padding: '0.5rem 1.25rem' }}>
+                    Thiết lập lại bộ lọc
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="products-display-grid">
+                    {products.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+
+                  {pagination.totalPages > 1 && (
+                    <div className="pagination-bar">
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="btn btn-secondary"
+                        style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
+                      >
+                        ← Trang trước
+                      </button>
+                      <span className="pagination-info" style={{ fontSize: '0.9rem' }}>
+                        Trang {currentPage} / {pagination.totalPages}
+                      </span>
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === pagination.totalPages}
+                        className="btn btn-secondary"
+                        style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
+                      >
+                        Trang sau →
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
