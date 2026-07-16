@@ -92,7 +92,16 @@ function ProductDetail() {
       const res = await api.get(`/products/${slug}`);
       const prodData = res.data;
       setProduct(prodData);
-      setVariants(prodData.variants || []);
+      // Lọc các variant để mỗi size chỉ xuất hiện duy nhất 1 lần (chọn variant có tồn kho lớn nhất của size đó)
+      const rawVariants = prodData.variants || [];
+      const uniqueSizeMap = {};
+      rawVariants.forEach(v => {
+        if (!uniqueSizeMap[v.size] || v.stock_quantity > uniqueSizeMap[v.size].stock_quantity) {
+          uniqueSizeMap[v.size] = v;
+        }
+      });
+      const uniqueVariants = Object.values(uniqueSizeMap).sort((a, b) => parseFloat(a.size) - parseFloat(b.size));
+      setVariants(uniqueVariants);
 
       if (prodData.combo) {
         if (prodData.combo.socks?.available_sizes?.length > 0) {
@@ -342,7 +351,8 @@ function ProductDetail() {
           selectedAccessories.map(varId =>
             api.post('/cart/items', {
               variant_id: varId,
-              quantity: 1
+              quantity: 1,
+              is_bought_together: true
             })
           )
         );
@@ -383,10 +393,10 @@ function ProductDetail() {
   const hasDiscount = product.discount_price !== null && product.discount_price > 0;
   const currentPrice = hasDiscount ? product.discount_price : product.price;
 
-  // Compute total value (Main product + accessories)
+  // Compute total value (Main product + accessories with 20% discount)
   const accessoriesTotal = accessories
     .filter(acc => selectedAccessories.includes(acc.variants?.[0]?.id || acc.id))
-    .reduce((sum, acc) => sum + (acc.discount_price || acc.price || 0), 0);
+    .reduce((sum, acc) => sum + Math.round((acc.discount_price || acc.price || 0) * 0.8), 0);
   const totalCombinedPrice = (currentPrice * quantity) + accessoriesTotal;
 
   return (
@@ -754,6 +764,9 @@ function ProductDetail() {
                   const accVarId = acc.variants?.[0]?.id || acc.id;
                   const isChecked = selectedAccessories.includes(accVarId);
 
+                  const baseAccPrice = acc.discount_price || acc.price || 0;
+                  const boughtTogetherPrice = Math.round(baseAccPrice * 0.8); // 20% discount
+
                   return (
                     <div key={acc.id} className="bought-together-item">
                       <input 
@@ -769,13 +782,14 @@ function ProductDetail() {
                         <span className="bought-together-name">{acc.name}</span>
                         <div className="bought-together-price-row">
                           <span className="bought-together-price">
-                            {(acc.discount_price || acc.price || 0).toLocaleString('vi-VN')}đ
+                            {boughtTogetherPrice.toLocaleString('vi-VN')}đ
                           </span>
-                          {(acc.discount_price && acc.price > acc.discount_price) && (
-                            <span className="bought-together-oldprice">
-                              {acc.price.toLocaleString('vi-VN')}đ
-                            </span>
-                          )}
+                          <span className="bought-together-oldprice">
+                            {baseAccPrice.toLocaleString('vi-VN')}đ
+                          </span>
+                          <span className="discount-tag" style={{ fontSize: '0.65rem', padding: '1px 4px', marginLeft: '0.25rem' }}>
+                            -20%
+                          </span>
                         </div>
                       </div>
 

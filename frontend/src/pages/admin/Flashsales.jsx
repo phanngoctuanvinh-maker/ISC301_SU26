@@ -10,6 +10,7 @@ function Flashsales() {
 
   // Form State
   const [showForm, setShowForm] = useState(false);
+  const [editingSessionId, setEditingSessionId] = useState(null);
   const [name, setName] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -48,7 +49,18 @@ function Flashsales() {
     }
   };
 
+  const toDatetimeLocal = (isoString) => {
+    const d = new Date(isoString);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   const handleOpenCreate = () => {
+    setEditingSessionId(null);
     setName('');
     
     // Set default times: tomorrow 12:00 to 14:00
@@ -63,6 +75,28 @@ function Flashsales() {
     setEndTime(`${year}-${month}-${day}T14:00`);
     
     setSelectedItems([]);
+    setFormError('');
+    setCurrentProductId('');
+    setCurrentFlashPrice('');
+    setCurrentFlashQuantity('');
+    setShowForm(true);
+  };
+
+  const handleOpenEdit = (session) => {
+    setEditingSessionId(session.id);
+    setName(session.name);
+    setStartTime(toDatetimeLocal(session.start_time));
+    setEndTime(toDatetimeLocal(session.end_time));
+    
+    const itemsForEdit = session.items.map(item => ({
+      product_id: item.product_id,
+      name: item.product_name,
+      original_price: item.original_price,
+      flash_price: item.flash_price,
+      flash_quantity: item.flash_quantity
+    }));
+    setSelectedItems(itemsForEdit);
+    
     setFormError('');
     setCurrentProductId('');
     setCurrentFlashPrice('');
@@ -140,12 +174,18 @@ function Flashsales() {
     };
 
     try {
-      await api.post('/flashsales/admin', payload);
-      setSuccess('Tạo chương trình Flash Sale thành công!');
+      if (editingSessionId) {
+        await api.put(`/flashsales/admin/${editingSessionId}`, payload);
+        setSuccess('Cập nhật chương trình Flash Sale thành công!');
+      } else {
+        await api.post('/flashsales/admin', payload);
+        setSuccess('Tạo chương trình Flash Sale thành công!');
+      }
       setShowForm(false);
+      setEditingSessionId(null);
       fetchFlashSales();
     } catch (err) {
-      setFormError(err.message || 'Không thể tạo chương trình Flash Sale');
+      setFormError(err.message || 'Không thể lưu chương trình Flash Sale');
     }
   };
 
@@ -210,7 +250,7 @@ function Flashsales() {
       {showForm && (
         <div className="glass-card" style={{ marginBottom: '2rem', border: '1px solid var(--accent)' }}>
           <h2 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>
-            Tạo chương trình Flash Sale mới theo giờ
+            {editingSessionId ? 'Cập nhật chương trình Flash Sale' : 'Tạo chương trình Flash Sale mới theo giờ'}
           </h2>
           {formError && <div className="alert alert-danger">{formError}</div>}
           
@@ -356,9 +396,9 @@ function Flashsales() {
 
             <div className="flex gap-4">
               <button type="submit" className="btn btn-primary">
-                Tạo chương trình
+                {editingSessionId ? 'Cập nhật' : 'Tạo chương trình'}
               </button>
-              <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary">
+              <button type="button" onClick={() => { setShowForm(false); setEditingSessionId(null); }} className="btn btn-secondary">
                 Hủy bỏ
               </button>
             </div>
@@ -426,13 +466,22 @@ function Flashsales() {
                   </td>
 
                   <td style={{ padding: '1rem', textAlign: 'center' }}>
-                    <button 
-                      onClick={() => handleDeleteSession(s.id)} 
-                      className="btn btn-danger" 
-                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', background: 'var(--danger)', boxShadow: 'none' }}
-                    >
-                      Xoá
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                      <button 
+                        onClick={() => handleOpenEdit(s)} 
+                        className="btn btn-secondary" 
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center' }}
+                      >
+                        Sửa
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteSession(s.id)} 
+                        className="btn btn-danger" 
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', background: 'var(--danger)', boxShadow: 'none' }}
+                      >
+                        Xoá
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

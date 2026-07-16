@@ -23,8 +23,9 @@ const productService = {
     const params = [];
 
     if (category_id) {
-      sql += ' AND p.category_id = ?';
-      params.push(parseInt(category_id, 10));
+      sql += ' AND (p.category_id = ? OR c.parent_id = ?)';
+      const parsedId = parseInt(category_id, 10);
+      params.push(parsedId, parsedId);
     }
 
     if (brand_id) {

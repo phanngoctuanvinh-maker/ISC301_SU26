@@ -38,9 +38,20 @@ async function handleGetActiveOrUpcoming(req, res, next) {
 }
 
 
+async function handleUpdate(req, res, next) {
+  try {
+    const result = await flashSaleService.updateFlashSale(req.params.id, req.body);
+    return successResponse(res, { id: result.id }, result.message);
+  } catch (error) {
+    next(error);
+  }
+}
+
+
 module.exports = {
   handleCreate,
   handleListAll,
   handleDelete,
-  handleGetActiveOrUpcoming
+  handleGetActiveOrUpcoming,
+  handleUpdate
 };

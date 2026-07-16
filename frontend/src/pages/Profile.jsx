@@ -49,6 +49,7 @@ function Profile() {
 
   useEffect(() => {
     fetchProfile();
+    fetchOrders();
   }, []);
 
   useEffect(() => {
@@ -335,11 +336,11 @@ function Profile() {
   const getOrderCountByStatus = (statusGroup) => {
     return orders.filter(order => {
       if (statusGroup === 'pending') return order.status === 'pending';
-      if (statusGroup === 'processing') return order.status === 'processing';
+      if (statusGroup === 'processing') return order.status === 'confirmed' || order.status === 'processing';
       if (statusGroup === 'delivering') {
         return order.status === 'shipping' || order.status === 'delivering' || order.status === 'shipped';
       }
-      if (statusGroup === 'completed') return order.status === 'completed';
+      if (statusGroup === 'completed') return order.status === 'delivered' || order.status === 'completed';
       if (statusGroup === 'cancelled') {
         return order.status === 'cancelled' || order.status === 'refunded';
       }
@@ -368,11 +369,11 @@ function Profile() {
   const filteredOrders = orders.filter(order => {
     if (selectedStatusFilter === 'all') return true;
     if (selectedStatusFilter === 'pending') return order.status === 'pending';
-    if (selectedStatusFilter === 'processing') return order.status === 'processing';
+    if (selectedStatusFilter === 'processing') return order.status === 'confirmed' || order.status === 'processing';
     if (selectedStatusFilter === 'delivering') {
       return order.status === 'shipping' || order.status === 'delivering' || order.status === 'shipped';
     }
-    if (selectedStatusFilter === 'completed') return order.status === 'completed';
+    if (selectedStatusFilter === 'completed') return order.status === 'delivered' || order.status === 'completed';
     if (selectedStatusFilter === 'cancelled') {
       return order.status === 'cancelled' || order.status === 'refunded';
     }

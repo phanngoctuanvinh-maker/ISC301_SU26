@@ -1086,6 +1086,12 @@
   background: #f8fafc;
 }
 
+.size-btn.active {
+  border-color: #0f4c81;
+  color: #ffffff;
+  background: #0f4c81;
+}
+
 .apply-filter-btn {
   width: 100%;
   padding: 0.45rem 0;

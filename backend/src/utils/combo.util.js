@@ -1,6 +1,7 @@
 /**
- * Tiện ích tính toán và ghép combo giảm giá 15%
- * Một combo hoàn chỉnh gồm: 1 Giày + 1 Tất (vớ) + 1 Dây giày
+ * Tiện ích tính toán và ghép combo giảm giá
+ * 1. Combo 3 món hoàn chỉnh: 1 Giày + 1 Tất (vớ) + 1 Dây giày -> Giảm 15% cho cả 3 sản phẩm.
+ * 2. Phụ kiện mua kèm: Khi trong giỏ hàng có Giày, bất kỳ phụ kiện lẻ nào có đánh dấu mua kèm (is_bought_together = 1) sẽ được giảm 20%.
  */
 
 function applyComboDiscount(items) {
@@ -8,17 +9,18 @@ function applyComboDiscount(items) {
   const shoesUnits = [];
   const socksUnits = [];
   const lacesUnits = [];
+  const otherAccUnits = [];
 
-  // Tạo bản sao danh sách để không làm thay đổi trực tiếp dữ liệu gốc bên ngoài ngoài ý muốn
+  // Tạo bản sao danh sách để không làm thay đổi trực tiếp dữ liệu gốc
   items.forEach((item, index) => {
-    // Khởi tạo các thuộc tính phục vụ tính toán
     item.original_price = item.price; 
     item.combo_discount = 0;
     item.is_combo_item = false;
 
-    const isSocks = item.category_slug === 'vo-tat-the-thao';
-    const isLaces = item.category_slug === 'day-giay-the-thao';
-    const isShoe = !isSocks && !isLaces;
+    const isSocks = item.category_slug === 'vo-tat-the-thao' || item.category_slug === 'vo-tat';
+    const isLaces = item.category_slug === 'day-giay-the-thao' || item.category_slug === 'day-giay';
+    const isOtherAcc = item.category_slug === 'chai-xit-khu-mui' || item.category_slug === 'lot-giay-the-thao' || item.category_slug === 'bo-ve-sinh-giay' || item.category_slug === 'phu-kien';
+    const isShoe = !isSocks && !isLaces && !isOtherAcc;
 
     const qty = Number(item.quantity || 0);
 
@@ -27,63 +29,98 @@ function applyComboDiscount(items) {
         index, 
         brand_id: item.brand_id, 
         price: Number(item.price), 
-        paired: false 
+        paired: false,
+        comboType: null,
+        is_bought_together: item.is_bought_together ? 1 : 0
       };
       if (isSocks) {
         socksUnits.push(unit);
       } else if (isLaces) {
         lacesUnits.push(unit);
+      } else if (isOtherAcc) {
+        otherAccUnits.push(unit);
       } else if (isShoe) {
         shoesUnits.push(unit);
       }
     }
   });
 
-  // Ghép cặp mỗi đơn vị Giày với 1 Tất và 1 Dây giày
+  // 1. Ghép cặp mỗi đơn vị Giày với 1 Tất và 1 Dây giày (Full Combo 3 món - Giảm 15%)
   shoesUnits.forEach(shoe => {
-    // 1. Tìm 1 Tất chưa ghép (ưu tiên cùng thương hiệu)
     let sock = socksUnits.find(s => !s.paired && s.brand_id === shoe.brand_id);
     if (!sock) {
-      sock = socksUnits.find(s => !s.paired); // Fallback tất khác thương hiệu
+      sock = socksUnits.find(s => !s.paired);
     }
-    if (!sock) return; // Không đủ tất để tạo combo
+    if (!sock) return;
 
-    // 2. Tìm 1 Dây giày chưa ghép (ưu tiên cùng thương hiệu)
     let lace = lacesUnits.find(l => !l.paired && l.brand_id === shoe.brand_id);
     if (!lace) {
-      lace = lacesUnits.find(l => !l.paired); // Fallback dây giày khác thương hiệu
+      lace = lacesUnits.find(l => !l.paired);
     }
-    if (!lace) return; // Không đủ dây giày để tạo combo
+    if (!lace) return;
 
-    // Đánh dấu đã ghép cặp thành công
     shoe.paired = true;
     sock.paired = true;
     lace.paired = true;
+    
+    shoe.comboType = 'full';
+    sock.comboType = 'full';
+    lace.comboType = 'full';
   });
 
-  // Tính tổng số tiền chiết khấu (15% trên giá của các đơn vị sản phẩm được ghép cặp)
+  // 2. Nếu có giày trong giỏ hàng, tất cả phụ kiện lẻ có đánh dấu mua kèm (is_bought_together = 1) đều nhận chiết khấu 20%
+  const hasAnyShoe = shoesUnits.length > 0;
+  if (hasAnyShoe) {
+    socksUnits.forEach(sock => {
+      if (!sock.paired && sock.is_bought_together === 1) {
+        sock.paired = true;
+        sock.comboType = 'accessory';
+      }
+    });
+    lacesUnits.forEach(lace => {
+      if (!lace.paired && lace.is_bought_together === 1) {
+        lace.paired = true;
+        lace.comboType = 'accessory';
+      }
+    });
+    otherAccUnits.forEach(acc => {
+      if (!acc.paired && acc.is_bought_together === 1) {
+        acc.paired = true;
+        acc.comboType = 'accessory';
+      }
+    });
+  }
+
+  // Tính tổng số tiền chiết khấu
   let totalComboDiscount = 0;
 
   const applyUnitDiscount = (unit) => {
     if (unit.paired) {
-      // Chiết khấu 15% cho từng đơn vị sản phẩm tham gia combo
-      const discount = Math.round(unit.price * 0.15);
-      items[unit.index].combo_discount += discount;
-      items[unit.index].is_combo_item = true;
-      totalComboDiscount += discount;
+      let discountPercent = 0;
+      if (unit.comboType === 'full') {
+        discountPercent = 0.15;
+      } else if (unit.comboType === 'accessory') {
+        discountPercent = 0.20; // Giảm 20% cho phụ kiện mua kèm lẻ
+      }
+
+      if (discountPercent > 0) {
+        const discount = Math.round(unit.price * discountPercent);
+        items[unit.index].combo_discount += discount;
+        items[unit.index].is_combo_item = true;
+        totalComboDiscount += discount;
+      }
     }
   };
 
   shoesUnits.forEach(applyUnitDiscount);
   socksUnits.forEach(applyUnitDiscount);
   lacesUnits.forEach(applyUnitDiscount);
+  otherAccUnits.forEach(applyUnitDiscount);
 
   // Cập nhật lại giá bán và tổng tiền từng dòng hàng sau khi giảm giá combo
   items.forEach(item => {
     if (item.combo_discount > 0) {
-      // Điều chỉnh line_total bằng cách trừ đi số tiền combo_discount
       item.line_total = (item.price * item.quantity) - item.combo_discount;
-      // Giá trung bình của 1 sản phẩm sau khi đã giảm combo
       item.price = Math.round(item.line_total / item.quantity);
     } else {
       item.line_total = item.price * item.quantity;

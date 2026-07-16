@@ -78,6 +78,7 @@ function mapCartItem(item) {
     price,
     quantity,
     stock_quantity: Number(item.stock_quantity || 0),
+    is_bought_together: item.is_bought_together ? 1 : 0,
     line_total: price * quantity
   };
 }
@@ -102,6 +103,7 @@ async function getCart(userId) {
         ci.id,
         ci.variant_id,
         ci.quantity,
+        ci.is_bought_together,
         pv.product_id,
         pv.sku,
         pv.size,
@@ -164,9 +166,10 @@ async function addItem(userId, body) {
   const cart = await getOrCreateCart(userId);
   const variant = await getVariantForCart(body.variant_id);
   const requestedQuantity = Number(body.quantity);
+  const isBoughtTogether = body.is_bought_together ? 1 : 0;
 
   const existing = await db.queryOne(
-    'SELECT id, quantity FROM cart_items WHERE cart_id = ? AND variant_id = ? LIMIT 1',
+    'SELECT id, quantity, is_bought_together FROM cart_items WHERE cart_id = ? AND variant_id = ? LIMIT 1',
     [cart.id, body.variant_id]
   );
   const nextQuantity = existing ? Number(existing.quantity) + requestedQuantity : requestedQuantity;
@@ -176,9 +179,15 @@ async function addItem(userId, body) {
   }
 
   if (existing) {
-    await db.query('UPDATE cart_items SET quantity = ?, updated_at = NOW() WHERE id = ?', [nextQuantity, existing.id]);
+    await db.query(
+      'UPDATE cart_items SET quantity = ?, is_bought_together = ?, updated_at = NOW() WHERE id = ?', 
+      [nextQuantity, isBoughtTogether || existing.is_bought_together, existing.id]
+    );
   } else {
-    await db.query('INSERT INTO cart_items (cart_id, variant_id, quantity) VALUES (?, ?, ?)', [cart.id, body.variant_id, requestedQuantity]);
+    await db.query(
+      'INSERT INTO cart_items (cart_id, variant_id, quantity, is_bought_together) VALUES (?, ?, ?, ?)', 
+      [cart.id, body.variant_id, requestedQuantity, isBoughtTogether]
+    );
   }
 
   return getCart(userId);

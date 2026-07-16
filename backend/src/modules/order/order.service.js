@@ -17,7 +17,7 @@ const calculateShippingFee = (city) => {
 const previewOrder = async (userId, body) => {
   // 1. Lấy giỏ hàng của user kèm thông tin variant, brand_id, category_slug
   const cartItems = await db.query(
-    `SELECT ci.id as cart_id, ci.variant_id, ci.quantity,
+    `SELECT ci.id as cart_id, ci.variant_id, ci.quantity, ci.is_bought_together,
             COALESCE(pv.price, p.price) AS price, pv.discount_price, pv.stock_quantity, pv.color, pv.size,
             p.name as product_name, p.main_image_url, p.brand_id, p.id as product_id, cat.slug as category_slug
      FROM cart_items ci
@@ -113,7 +113,7 @@ const previewOrder = async (userId, body) => {
 const createOrder = async (userId, body) => {
   // 1. Lấy giỏ hàng kèm thông tin variant, brand_id, category_slug
   const cartItems = await db.query(
-    `SELECT ci.id as cart_id, ci.variant_id, ci.quantity,
+    `SELECT ci.id as cart_id, ci.variant_id, ci.quantity, ci.is_bought_together,
             COALESCE(pv.price, p.price) AS price, pv.discount_price, pv.stock_quantity, pv.color, pv.size,
             p.name as product_name, p.main_image_url, p.brand_id, p.id as product_id, cat.slug as category_slug
      FROM cart_items ci
@@ -497,6 +497,11 @@ const updateOrderStatusByAdmin = async (orderId, newStatus, trackingNumber) => {
     if (newStatus) {
       updateFields.push('status = ?');
       params.push(newStatus);
+      
+      if (newStatus === 'delivered') {
+        updateFields.push('payment_status = ?');
+        params.push('paid');
+      }
     }
     if (trackingNumber !== undefined) {
       updateFields.push('tracking_number = ?');
@@ -508,6 +513,14 @@ const updateOrderStatusByAdmin = async (orderId, newStatus, trackingNumber) => {
       await connection.execute(
         `UPDATE orders SET ${updateFields.join(', ')} WHERE id = ?`,
         params
+      );
+    }
+
+    // Tự động cập nhật thanh toán thành công khi đơn hàng được giao thành công
+    if (newStatus === 'delivered') {
+      await connection.execute(
+        `UPDATE payments SET status = 'success', paid_at = CURRENT_TIMESTAMP WHERE order_id = ? AND status = 'pending'`,
+        [orderId]
       );
     }
 

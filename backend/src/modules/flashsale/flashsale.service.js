@@ -123,9 +123,73 @@ async function getActiveOrUpcomingFlashSale() {
   };
 }
 
+async function updateFlashSale(id, data) {
+  const { name, start_time, end_time, items } = data;
+  
+  if (!name || !start_time || !end_time || !items || !items.length) {
+    throw { status: 400, message: 'Thiếu thông tin cập nhật Flash Sale' };
+  }
+
+  const session = await db.queryOne('SELECT id FROM flash_sales WHERE id = ? LIMIT 1', [id]);
+  if (!session) {
+    throw { status: 404, message: 'Chương trình Flash Sale không tồn tại' };
+  }
+
+  const connection = await db.pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // 1. Update the session details
+    await connection.execute(
+      'UPDATE flash_sales SET name = ?, start_time = ?, end_time = ? WHERE id = ?',
+      [name, new Date(start_time), new Date(end_time), id]
+    );
+
+    // 2. Fetch existing items to preserve sold_quantity
+    const [existingItems] = await connection.execute(
+      'SELECT product_id, sold_quantity FROM flash_sale_items WHERE flash_sale_id = ?',
+      [id]
+    );
+    const soldQtyMap = {};
+    for (const item of existingItems) {
+      soldQtyMap[item.product_id] = item.sold_quantity;
+    }
+
+    // 3. Delete existing items
+    await connection.execute('DELETE FROM flash_sale_items WHERE flash_sale_id = ?', [id]);
+
+    // 4. Insert the updated flash sale items
+    for (const item of items) {
+      const { product_id, flash_price, flash_quantity } = item;
+
+      // Verify product exists
+      const [prodRows] = await connection.execute('SELECT id FROM products WHERE id = ? LIMIT 1', [product_id]);
+      if (!prodRows.length) {
+        throw { status: 404, message: `Sản phẩm với ID ${product_id} không tồn tại` };
+      }
+
+      const soldQty = soldQtyMap[product_id] || 0;
+
+      await connection.execute(
+        'INSERT INTO flash_sale_items (flash_sale_id, product_id, flash_price, flash_quantity, sold_quantity) VALUES (?, ?, ?, ?, ?)',
+        [id, product_id, flash_price, flash_quantity, soldQty]
+      );
+    }
+
+    await connection.commit();
+    return { message: 'Cập nhật chương trình Flash Sale thành công', id };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
 module.exports = {
   createFlashSale,
   listAllFlashSales,
   deleteFlashSale,
-  getActiveOrUpcomingFlashSale
+  getActiveOrUpcomingFlashSale,
+  updateFlashSale
 };

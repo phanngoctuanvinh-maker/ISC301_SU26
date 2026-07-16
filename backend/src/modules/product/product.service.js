@@ -62,6 +62,14 @@ function buildPublicFilters(query) {
   const filters = ['p.is_active = true', 'c.is_active = true', 'b.is_active = true'];
   const values = [];
 
+  // Hide accessories by default unless explicitly filtering by category or searching
+  if (!query.category_id && !query.category_slug && !query.search) {
+    filters.push(`
+      p.category_id != (SELECT id FROM categories WHERE slug = 'phu-kien' LIMIT 1) 
+      AND (c.parent_id IS NULL OR c.parent_id != (SELECT id FROM categories WHERE slug = 'phu-kien' LIMIT 1))
+    `);
+  }
+
   if (query.search) {
     addFilter(filters, values, '(p.name LIKE ? OR p.description LIKE ?)', `%${query.search.trim()}%`);
     values.push(`%${query.search.trim()}%`);
@@ -97,6 +105,24 @@ function buildPublicFilters(query) {
 
   if (query.sport_type) {
     addFilter(filters, values, 'p.sport_type = ?', query.sport_type);
+  }
+
+  if (query.min_price !== undefined && query.min_price !== '') {
+    const minPrice = Number(query.min_price);
+    if (!isNaN(minPrice)) {
+      addFilter(filters, values, 'p.price >= ?', minPrice);
+    }
+  }
+
+  if (query.max_price !== undefined && query.max_price !== '') {
+    const maxPrice = Number(query.max_price);
+    if (!isNaN(maxPrice)) {
+      addFilter(filters, values, 'p.price <= ?', maxPrice);
+    }
+  }
+
+  if (query.size) {
+    addFilter(filters, values, 'p.id IN (SELECT DISTINCT product_id FROM product_variants WHERE size = ? AND is_active = true AND stock_quantity > 0)', String(query.size).trim());
   }
 
   if (query.featured !== undefined || query.is_featured !== undefined) {
@@ -135,7 +161,7 @@ async function attachVariants(product) {
     price: Number(product.price || 0),
     discount_price: product.discount_price !== null ? Number(product.discount_price) : null,
     total_stock: Number(product.total_stock || 0),
-    available_sizes: variants.filter(item => Number(item.stock_quantity) > 0).map(item => item.size),
+    available_sizes: [...new Set(variants.filter(item => Number(item.stock_quantity) > 0).map(item => item.size))],
     variants
   };
 }
@@ -419,6 +445,7 @@ async function getPublicProductBySlug(slug, user) {
 
 async function getProductCombo(product) {
   let sock = null;
+  let lace = null;
 
   const getSockSQL = (useBrand) => `
     SELECT p.id, p.category_id, p.brand_id, p.name, p.slug, p.description, p.main_image_url,
@@ -426,8 +453,9 @@ async function getProductCombo(product) {
            MIN(CASE WHEN pv.is_active = true THEN pv.discount_price ELSE NULL END) AS discount_price
     FROM products p
     INNER JOIN categories c ON c.id = p.category_id
+    INNER JOIN brands b ON b.id = p.brand_id
     LEFT JOIN product_variants pv ON pv.product_id = p.id
-    WHERE c.slug = 'vo-tat-the-thao' AND p.is_active = true AND c.is_active = true
+    WHERE c.slug = 'vo-tat-the-thao' AND p.is_active = true AND c.is_active = true AND b.is_active = true
       ${useBrand ? 'AND p.brand_id = ?' : ''}
     GROUP BY p.id, p.category_id, p.brand_id, p.name, p.slug, p.description, p.main_image_url
     LIMIT 1
@@ -439,8 +467,9 @@ async function getProductCombo(product) {
            MIN(CASE WHEN pv.is_active = true THEN pv.discount_price ELSE NULL END) AS discount_price
     FROM products p
     INNER JOIN categories c ON c.id = p.category_id
+    INNER JOIN brands b ON b.id = p.brand_id
     LEFT JOIN product_variants pv ON pv.product_id = p.id
-    WHERE c.slug = 'day-giay-the-thao' AND p.is_active = true AND c.is_active = true
+    WHERE c.slug = 'day-giay-the-thao' AND p.is_active = true AND c.is_active = true AND b.is_active = true
       ${useBrand ? 'AND p.brand_id = ?' : ''}
     GROUP BY p.id, p.category_id, p.brand_id, p.name, p.slug, p.description, p.main_image_url
     LIMIT 1
@@ -487,10 +516,10 @@ async function getProductCombo(product) {
   const laceVariants = await getProductVariants(lace.id);
 
   sock.variants = sockVariants;
-  sock.available_sizes = sockVariants.filter(v => Number(v.stock_quantity) > 0).map(v => v.size);
+  sock.available_sizes = [...new Set(sockVariants.filter(v => Number(v.stock_quantity) > 0).map(v => v.size))];
   
   lace.variants = laceVariants;
-  lace.available_sizes = laceVariants.filter(v => Number(v.stock_quantity) > 0).map(v => v.size);
+  lace.available_sizes = [...new Set(laceVariants.filter(v => Number(v.stock_quantity) > 0).map(v => v.size))];
 
   return {
     socks: sock,

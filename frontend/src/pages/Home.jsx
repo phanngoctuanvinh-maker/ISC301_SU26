@@ -37,6 +37,14 @@ function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedCategory, setExpandedCategory] = useState('');
 
+  // Sidebar Filter States
+  const [tempMinPrice, setTempMinPrice] = useState('');
+  const [tempMaxPrice, setTempMaxPrice] = useState('');
+  const [tempSize, setTempSize] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [selectedSize, setSelectedSize] = useState('');
+
   const [portalTarget, setPortalTarget] = useState(null);
   const [searchPortalTarget, setSearchPortalTarget] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -104,13 +112,13 @@ function Home() {
 
   useEffect(() => {
     fetchProducts();
-  }, [activeSearch, selectedCategory, selectedBrand, selectedGender, selectedSort, currentPage]);
+  }, [activeSearch, selectedCategory, selectedBrand, selectedGender, selectedSort, currentPage, minPrice, maxPrice, selectedSize]);
 
   const fetchCatalogs = async () => {
     try {
       const [catRes, brandRes] = await Promise.all([
-        api.get('/categories'),
-        api.get('/brands')
+        api.get('/categories', { params: { _t: Date.now() } }),
+        api.get('/brands', { params: { _t: Date.now() } })
       ]);
       setCategories(catRes.data || []);
       setBrands(brandRes.data || []);
@@ -138,6 +146,9 @@ function Home() {
       if (selectedCategory) params.category_id = selectedCategory;
       if (selectedBrand) params.brand_id = selectedBrand;
       if (selectedGender) params.gender = selectedGender;
+      if (minPrice) params.min_price = minPrice;
+      if (maxPrice) params.max_price = maxPrice;
+      if (selectedSize) params.size = selectedSize;
 
       const response = await api.get('/products', { params });
       setProducts(response.data?.items || []);
@@ -186,6 +197,13 @@ function Home() {
     window.scrollTo({ top: 300, behavior: 'smooth' });
   };
 
+  const handleApplySidebarFilters = () => {
+    setMinPrice(tempMinPrice);
+    setMaxPrice(tempMaxPrice);
+    setSelectedSize(tempSize);
+    setCurrentPage(1);
+  };
+
   const handleClearFilters = () => {
     setSearchVal('');
     setActiveSearch('');
@@ -195,9 +213,15 @@ function Home() {
     setSelectedSort('newest');
     setCurrentPage(1);
     setExpandedCategory('');
+    setTempMinPrice('');
+    setTempMaxPrice('');
+    setTempSize('');
+    setMinPrice('');
+    setMaxPrice('');
+    setSelectedSize('');
   };
 
-  const hasActiveFilters = activeSearch || selectedCategory || selectedBrand || selectedGender || selectedSort !== 'newest';
+  const hasActiveFilters = activeSearch || selectedCategory || selectedBrand || selectedGender || selectedSort !== 'newest' || minPrice || maxPrice || selectedSize;
 
   // Flatten categories for filter bar
   const flatCategories = categories.reduce((acc, cat) => {
@@ -507,9 +531,21 @@ function Home() {
               <div className="sidebar-section">
                 <h4 className="section-title">Khoảng giá (VNĐ)</h4>
                 <div className="price-inputs">
-                  <input type="text" placeholder="Từ" className="price-input" />
+                  <input 
+                    type="number" 
+                    placeholder="Từ" 
+                    className="price-input" 
+                    value={tempMinPrice}
+                    onChange={e => setTempMinPrice(e.target.value)}
+                  />
                   <span className="price-separator">-</span>
-                  <input type="text" placeholder="Đến" className="price-input" />
+                  <input 
+                    type="number" 
+                    placeholder="Đến" 
+                    className="price-input" 
+                    value={tempMaxPrice}
+                    onChange={e => setTempMaxPrice(e.target.value)}
+                  />
                 </div>
               </div>
 
@@ -517,13 +553,23 @@ function Home() {
               <div className="sidebar-section">
                 <h4 className="section-title">Kích cỡ (Size)</h4>
                 <div className="size-grid">
-                  {['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'].map(size => (
-                    <button key={size} className="size-btn">{size}</button>
-                  ))}
+                  {['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'].map(size => {
+                    const isSelected = tempSize === size;
+                    return (
+                      <button 
+                        key={size} 
+                        type="button"
+                        className={`size-btn ${isSelected ? 'active' : ''}`}
+                        onClick={() => setTempSize(isSelected ? '' : size)}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              <button className="apply-filter-btn">ÁP DỤNG BỘ LỌC</button>
+              <button type="button" onClick={handleApplySidebarFilters} className="apply-filter-btn">ÁP DỤNG BỘ LỌC</button>
             </aside>
 
             {/* Right main panel */}
@@ -581,6 +627,16 @@ function Home() {
                   {selectedGender && (
                     <button className="active-chip" style={{ background: 'linear-gradient(135deg, hsl(280,80%,60%), hsl(187,92%,46%))' }} onClick={() => handleGenderSelect(selectedGender)}>
                       {selectedGender === 'male' ? '♂ Nam' : selectedGender === 'female' ? '♀ Nữ' : '⚡ Unisex'} <span className="active-chip-x">×</span>
+                    </button>
+                  )}
+                  {(minPrice || maxPrice) && (
+                    <button className="active-chip" style={{ background: 'linear-gradient(135deg, hsl(200,80%,45%), hsl(187,92%,46%))' }} onClick={() => { setMinPrice(''); setTempMinPrice(''); setMaxPrice(''); setTempMaxPrice(''); setCurrentPage(1); }}>
+                      💵 {minPrice ? Number(minPrice).toLocaleString('vi-VN') + '₫' : '0₫'} - {maxPrice ? Number(maxPrice).toLocaleString('vi-VN') + '₫' : '∞'} <span className="active-chip-x">×</span>
+                    </button>
+                  )}
+                  {selectedSize && (
+                    <button className="active-chip" style={{ background: 'linear-gradient(135deg, hsl(150,60%,40%), hsl(187,92%,46%))' }} onClick={() => { setSelectedSize(''); setTempSize(''); setCurrentPage(1); }}>
+                      📏 Size: {selectedSize} <span className="active-chip-x">×</span>
                     </button>
                   )}
                   {selectedSort === 'featured' && (
