@@ -322,6 +322,109 @@ function Home() {
         searchPortalTarget
       )}
 
+      {/* ─── Banner Slider Section ─────────────────────────────────────────── */}
+      {!selectedBrand && (
+        banners.length > 0 ? (
+          <section className="home-banner-slider">
+            {/* Slides */}
+            <div className="slider-track">
+              {banners.map((banner, i) => (
+                <div
+                  key={banner.id}
+                  className={`slider-slide ${i === activeSlide ? 'active' : ''}`}
+                  onClick={() => {
+                    if (banner.link_type === 'url' && banner.link_url) window.open(banner.link_url, '_blank');
+                  }}
+                  style={{ cursor: banner.link_type !== 'none' ? 'pointer' : 'default' }}
+                >
+                  <img
+                    src={banner.image_url}
+                    alt={banner.title || `Banner ${i + 1}`}
+                    className="slider-img"
+                    onError={e => { e.target.src = ''; e.target.style.display = 'none'; }}
+                  />
+                  {banner.title && (
+                    <div className="slider-caption">
+                      <h2 className="slider-caption-title">{banner.title}</h2>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Arrow controls */}
+            {banners.length > 1 && (
+              <>
+                <button
+                  className="slider-arrow slider-arrow--prev"
+                  onClick={() => goToSlide((activeSlide - 1 + banners.length) % banners.length)}
+                  aria-label="Trước"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <button
+                  className="slider-arrow slider-arrow--next"
+                  onClick={() => goToSlide((activeSlide + 1) % banners.length)}
+                  aria-label="Tiếp"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </>
+            )}
+
+            {/* Dots */}
+            {banners.length > 1 && (
+              <div className="slider-dots">
+                {banners.map((_, i) => (
+                  <button
+                    key={i}
+                    className={`slider-dot ${i === activeSlide ? 'active' : ''}`}
+                    onClick={() => goToSlide(i)}
+                    aria-label={`Slide ${i + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Slide counter */}
+            {banners.length > 1 && (
+              <span className="slider-counter">{activeSlide + 1} / {banners.length}</span>
+            )}
+          </section>
+        ) : (
+          /* Fallback static hero nếu chưa có banner nào */
+          <section className="home-hero-banner">
+            <div className="home-hero-grid">
+              <div className="home-hero-content">
+                <span className="home-hero-tag">NEW COLLECTION 2026</span>
+                <h1 className="home-hero-title">BƯỚC CHÂN KIÊN ĐỊNH</h1>
+                <p className="home-hero-subtitle">
+                  Khám phá bộ sưu tập giày thể thao và phụ kiện chính hãng mới nhất. Thiết kế tối ưu cho hiệu suất tập luyện và phong cách thời trang năng động hàng ngày.
+                </p>
+                <button
+                  onClick={() => {
+                    const catalog = document.querySelector('.products-display-grid') || document.querySelector('.home-layout-wrapper');
+                    if (catalog) catalog.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  className="btn btn-primary"
+                  style={{ padding: '0.95rem 2.2rem' }}
+                >
+                  Mua Ngay →
+                </button>
+              </div>
+              <div className="home-hero-image-box">
+                <div className="home-hero-image-glow"></div>
+                <img
+                  src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800"
+                  alt="Premium Sneaker"
+                  className="home-hero-image"
+                />
+              </div>
+            </div>
+          </section>
+        )
+      )}
+
       {/* ─── Premium Brands Bar (under header) ────────────────────────────────── */}
       <div className="brands-bar-under-header">
         <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
@@ -411,95 +514,6 @@ function Home() {
           </div>
         </div>
       </div>
-
-      {/* ─── Banner Slider Section ─────────────────────────────────────────── */}
-      {!selectedBrand && (
-        banners.length > 0 ? (
-          <section className="home-banner-slider">
-            {/* Slides */}
-            <div className="slider-track">
-              {banners.map((banner, i) => (
-                <div
-                  key={banner.id}
-                  className={`slider-slide ${i === activeSlide ? 'active' : ''}`}
-                  onClick={() => {
-                    if (banner.link_type === 'url' && banner.link_url) window.open(banner.link_url, '_blank');
-                  }}
-                  style={{ cursor: banner.link_type !== 'none' ? 'pointer' : 'default' }}
-                >
-                  <img
-                    src={banner.image_url}
-                    alt={banner.title || `Banner ${i + 1}`}
-                    className="slider-img"
-                    onError={e => { e.target.src = ''; e.target.style.display = 'none'; }}
-                  />
-                  {banner.title && (
-                    <div className="slider-caption">
-                      <h2 className="slider-caption-title">{banner.title}</h2>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Arrow controls */}
-            {banners.length > 1 && (
-              <>
-                <button
-                  className="slider-arrow slider-arrow--prev"
-                  onClick={() => goToSlide((activeSlide - 1 + banners.length) % banners.length)}
-                  aria-label="Trước"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <button
-                  className="slider-arrow slider-arrow--next"
-                  onClick={() => goToSlide((activeSlide + 1) % banners.length)}
-                  aria-label="Tiếp"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-              </>
-            )}
-
-            {/* Dots */}
-            {banners.length > 1 && (
-              <div className="slider-dots">
-                {banners.map((_, i) => (
-                  <button
-                    key={i}
-                    className={`slider-dot ${i === activeSlide ? 'active' : ''}`}
-                    onClick={() => goToSlide(i)}
-                    aria-label={`Slide ${i + 1}`}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Slide counter */}
-            {banners.length > 1 && (
-              <span className="slider-counter">{activeSlide + 1} / {banners.length}</span>
-            )}
-          </section>
-        ) : (
-          /* Fallback static hero nếu chưa có banner nào */
-          <section className="home-hero-banner">
-            <div className="home-hero-content">
-              <h1 className="home-hero-title">BƯỚC CHÂN KIÊN ĐỊNH</h1>
-              <p className="home-hero-subtitle">
-                Khám phá bộ sưu tập giày thể thao và phụ kiện chính hãng mới nhất. Thiết kế tối ưu cho hiệu suất tập luyện và phong cách thời trang năng động hàng ngày.
-              </p>
-              <button
-                onClick={() => window.scrollTo({ top: 550, behavior: 'smooth' })}
-                className="btn btn-primary"
-                style={{ padding: '0.85rem 2rem' }}
-              >
-                Mua Ngay →
-              </button>
-            </div>
-          </section>
-        )
-      )}
 
       {/* ─── Main Layout ───────────────────────────────────────────────────── */}
       {selectedBrand ? (
