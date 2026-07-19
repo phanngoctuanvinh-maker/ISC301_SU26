@@ -137,7 +137,7 @@ function buildPublicFilters(query) {
 async function getProductVariants(productId) {
   return db.query(
     `
-      SELECT id, product_id, sku, size, stock_quantity, low_stock_threshold, is_active
+      SELECT id, product_id, sku, size, price, discount_price, stock_quantity, low_stock_threshold, is_active
       FROM product_variants
       WHERE product_id = ? AND is_active = true
       ORDER BY CAST(size AS DECIMAL(4,1)) ASC, size ASC, id ASC
@@ -149,10 +149,16 @@ async function getProductVariants(productId) {
 async function attachVariants(product) {
   const variants = await getProductVariants(product.id);
   
+  variants.forEach(v => {
+    v.price = v.price !== null ? Number(v.price) : null;
+    v.discount_price = v.discount_price !== null ? Number(v.discount_price) : null;
+  });
+
   if (product.flash_sale && product.flash_sale.status === 'active') {
     const remaining = product.flash_sale.flash_quantity - product.flash_sale.sold_quantity;
     variants.forEach(v => {
       v.stock_quantity = Math.min(v.stock_quantity, remaining);
+      v.discount_price = Number(product.flash_sale.flash_price);
     });
   }
 
@@ -503,12 +509,15 @@ async function getProductCombo(product) {
   lace.price = Number(lace.price);
   lace.discount_price = lace.discount_price !== null ? Number(lace.discount_price) : null;
 
-  const shoePrice = product.discount_price !== null ? product.discount_price : product.price;
-  const sockPrice = sock.discount_price !== null ? sock.discount_price : sock.price;
-  const lacePrice = lace.discount_price !== null ? lace.discount_price : lace.price;
+  const shoePrice = Number(product.discount_price !== null ? product.discount_price : product.price);
+  const sockPrice = Number(sock.discount_price !== null ? sock.discount_price : sock.price);
+  const lacePrice = Number(lace.discount_price !== null ? lace.discount_price : lace.price);
 
   const originalTotal = shoePrice + sockPrice + lacePrice;
-  const comboTotal = Math.round(originalTotal * 0.85); // 15% discount
+
+  // 15% discount only applies to socks and laces, shoe price remains unchanged (discount 0%)
+  const comboTotal = shoePrice + Math.round(sockPrice * 0.85) + Math.round(lacePrice * 0.85);
+
   const discountAmount = originalTotal - comboTotal;
 
   // Fetch variants for sock and lace

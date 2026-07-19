@@ -8,7 +8,8 @@ const cartItemSchema = Joi.object({
     'number.min': 'Số lượng phải lớn hơn 0',
     'number.max': 'Số lượng tối đa cho mỗi lần thêm là 99',
     'any.required': 'Vui lòng cung cấp số lượng'
-  })
+  }),
+  is_bought_together: Joi.boolean().optional()
 });
 
 const updateCartItemSchema = Joi.object({

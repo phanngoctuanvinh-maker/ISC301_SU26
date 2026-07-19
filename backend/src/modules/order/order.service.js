@@ -50,6 +50,7 @@ const previewOrder = async (userId, body) => {
     if (flashSale) {
       item.price = Number(flashSale.flash_price);
       item.discount_price = null;
+      item.is_flash_sale = true;
       const remaining = flashSale.flash_quantity - flashSale.sold_quantity;
       item.stock_quantity = Math.min(item.stock_quantity, remaining);
     }
@@ -146,6 +147,7 @@ const createOrder = async (userId, body) => {
     if (flashSale) {
       item.price = Number(flashSale.flash_price);
       item.discount_price = null;
+      item.is_flash_sale = true;
       const remaining = flashSale.flash_quantity - flashSale.sold_quantity;
       item.stock_quantity = Math.min(item.stock_quantity, remaining);
     }

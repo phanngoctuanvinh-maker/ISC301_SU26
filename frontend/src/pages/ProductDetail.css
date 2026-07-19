@@ -1047,3 +1047,48 @@
     width: 100%;
   }
 }
+
+/* Recommended Products Section */
+.recommended-section {
+  margin-top: 4rem;
+  margin-bottom: 2rem;
+}
+
+.recommended-title {
+  font-family: var(--font-heading);
+  font-size: 1.85rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--text-primary), var(--primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 0.6rem;
+  width: fit-content;
+  margin-bottom: 2rem;
+}
+
+/* Reusing grid structure in detail page context to ensure responsiveness */
+.recommended-section .products-display-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.75rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 1200px) {
+  .recommended-section .products-display-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .recommended-section .products-display-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .recommended-section .products-display-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -46,7 +46,11 @@ function resetPasswordEmailTemplate(fullName, resetUrl) {
 function orderConfirmationEmailTemplate(fullName, order, items) {
   const subject = `[Shoes Store] Xác nhận đơn hàng #${order.id} thành công`;
   const itemsHtml = items.map(item => {
-    const price = item.discount_price || item.price || item.discount_at_purchase || item.price_at_purchase || 0;
+    const discountPrice = Number(item.discount_price);
+    const regularPrice = Number(item.price);
+    const discountAtPurchase = Number(item.discount_at_purchase);
+    const priceAtPurchase = Number(item.price_at_purchase);
+    const price = discountPrice || regularPrice || discountAtPurchase || priceAtPurchase || 0;
     return `
     <tr>
       <td style="padding: 8px; border-bottom: 1px solid #ddd;">

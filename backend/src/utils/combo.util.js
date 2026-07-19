@@ -31,7 +31,9 @@ function applyComboDiscount(items) {
         price: Number(item.price), 
         paired: false,
         comboType: null,
-        is_bought_together: item.is_bought_together ? 1 : 0
+        is_bought_together: item.is_bought_together ? 1 : 0,
+        is_flash_sale: item.is_flash_sale ? true : false,
+        item_type: isSocks ? 'socks' : (isLaces ? 'laces' : (isOtherAcc ? 'accessory' : 'shoe'))
       };
       if (isSocks) {
         socksUnits.push(unit);
@@ -98,9 +100,19 @@ function applyComboDiscount(items) {
     if (unit.paired) {
       let discountPercent = 0;
       if (unit.comboType === 'full') {
-        discountPercent = 0.15;
+        if (unit.item_type === 'shoe') {
+          discountPercent = 0; // Giày không bao giờ giảm giá trong combo
+        } else if (unit.is_flash_sale) {
+          discountPercent = 0;
+        } else {
+          discountPercent = 0.15;
+        }
       } else if (unit.comboType === 'accessory') {
-        discountPercent = 0.20; // Giảm 20% cho phụ kiện mua kèm lẻ
+        if (unit.is_flash_sale) {
+          discountPercent = 0;
+        } else {
+          discountPercent = 0.20; // Giảm 20% cho phụ kiện mua kèm lẻ
+        }
       }
 
       if (discountPercent > 0) {

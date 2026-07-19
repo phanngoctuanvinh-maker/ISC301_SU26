@@ -53,6 +53,7 @@ async function getVariantForCart(variantId) {
 
   if (flashSale) {
     variant.price = Number(flashSale.flash_price);
+    variant.is_flash_sale = true;
     const remaining = flashSale.flash_quantity - flashSale.sold_quantity;
     variant.stock_quantity = Math.min(variant.stock_quantity, remaining);
   }
@@ -79,6 +80,7 @@ function mapCartItem(item) {
     quantity,
     stock_quantity: Number(item.stock_quantity || 0),
     is_bought_together: item.is_bought_together ? 1 : 0,
+    is_flash_sale: item.is_flash_sale ? true : false,
     line_total: price * quantity
   };
 }
@@ -143,6 +145,7 @@ async function getCart(userId) {
 
     if (flashSale) {
       row.price = Number(flashSale.flash_price);
+      row.is_flash_sale = true;
       const remaining = flashSale.flash_quantity - flashSale.sold_quantity;
       row.stock_quantity = Math.min(row.stock_quantity, remaining);
     }

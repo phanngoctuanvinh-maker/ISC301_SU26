@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import './ProductDetail.css';
+import ProductCard from '../components/ProductCard';
 
 function ProductDetail() {
   const { slug } = useParams();
@@ -26,6 +27,9 @@ function ProductDetail() {
 
   // Reviews
   const [reviews, setReviews] = useState([]);
+
+  // Recommended Products
+  const [recommendedProducts, setRecommendedProducts] = useState([]);
 
   // Modals / Status
   const [showSizeGuide, setShowSizeGuide] = useState(false);
@@ -81,6 +85,76 @@ function ProductDetail() {
     fetchAccessories();
   }, [slug]);
 
+  useEffect(() => {
+    const syncAccessoriesWithCart = async () => {
+      if (!token) return;
+      try {
+        const cartRes = await api.get('/cart');
+        const cartItems = cartRes.data?.items || [];
+        const accessoryIdsInCart = cartItems
+          .filter(item => item.is_bought_together === 1)
+          .map(item => item.variant_id);
+        
+        const activeAccessories = accessories
+          .map(acc => acc.variants?.[0]?.id || acc.id)
+          .filter(varId => accessoryIdsInCart.includes(varId));
+          
+        setSelectedAccessories(activeAccessories);
+      } catch (_) {}
+    };
+
+    if (accessories.length > 0) {
+      syncAccessoriesWithCart();
+    }
+
+    window.addEventListener('cart-updated', syncAccessoriesWithCart);
+    return () => {
+      window.removeEventListener('cart-updated', syncAccessoriesWithCart);
+    };
+  }, [accessories, token]);
+
+  const fetchRecommendedProducts = async (prodData) => {
+    try {
+      // 1. Lấy sản phẩm cùng danh mục (category_id)
+      let recommendRes = await api.get('/products', {
+        params: {
+          category_id: prodData.category_id,
+          limit: 6
+        }
+      });
+      let items = (recommendRes.data?.items || []).filter(item => item.id !== prodData.id);
+      
+      // 2. Nếu không đủ 4 đôi, lấy thêm sản phẩm cùng thương hiệu (brand_id)
+      if (items.length < 4 && prodData.brand_id) {
+        const brandRes = await api.get('/products', {
+          params: {
+            brand_id: prodData.brand_id,
+            limit: 6
+          }
+        });
+        const brandItems = (brandRes.data?.items || []).filter(
+          item => item.id !== prodData.id && !items.some(i => i.id === item.id)
+        );
+        items = [...items, ...brandItems];
+      }
+      
+      // 3. Nếu vẫn không đủ 4 đôi, lấy sản phẩm ngẫu nhiên/mới nhất chung chung
+      if (items.length < 4) {
+        const generalRes = await api.get('/products', {
+          params: { limit: 6 }
+        });
+        const generalItems = (generalRes.data?.items || []).filter(
+          item => item.id !== prodData.id && !items.some(i => i.id === item.id)
+        );
+        items = [...items, ...generalItems];
+      }
+      
+      setRecommendedProducts(items.slice(0, 4));
+    } catch (err) {
+      console.error('Lỗi khi lấy sản phẩm đề xuất:', err);
+    }
+  };
+
   const fetchProductDetails = async () => {
     try {
       setLoading(true);
@@ -92,6 +166,7 @@ function ProductDetail() {
       const res = await api.get(`/products/${slug}`);
       const prodData = res.data;
       setProduct(prodData);
+      fetchRecommendedProducts(prodData);
       // Lọc các variant để mỗi size chỉ xuất hiện duy nhất 1 lần (chọn variant có tồn kho lớn nhất của size đó)
       const rawVariants = prodData.variants || [];
       const uniqueSizeMap = {};
@@ -165,7 +240,7 @@ function ProductDetail() {
   const fetchAccessories = async () => {
     try {
       const res = await api.get('/products', {
-        params: { category_slug: 'phu-kien', limit: 3 }
+        params: { category_slug: 'phu-kien', limit: 12 }
       });
       // Filter out products without items
       const items = res.data?.items || [];
@@ -264,13 +339,38 @@ function ProductDetail() {
     }
   };
 
-  const handleAccessoryToggle = (acc) => {
-    // Get accessory default variant id
+  const handleAccessoryToggle = async (acc) => {
+    if (!token) {
+      setError('Vui lòng đăng nhập để chọn sản phẩm mua kèm.');
+      setTimeout(() => setError(''), 4000);
+      return;
+    }
+
     const variantId = acc.variants?.[0]?.id || acc.id;
-    if (selectedAccessories.includes(variantId)) {
-      setSelectedAccessories(prev => prev.filter(id => id !== variantId));
-    } else {
-      setSelectedAccessories(prev => [...prev, variantId]);
+    const isChecked = selectedAccessories.includes(variantId);
+
+    try {
+      if (isChecked) {
+        // Unticked: Remove from cart
+        const cartRes = await api.get('/cart');
+        const cartItem = (cartRes.data?.items || []).find(item => item.variant_id === variantId);
+        if (cartItem) {
+          await api.delete(`/cart/items/${cartItem.id}`);
+        }
+        setSelectedAccessories(prev => prev.filter(id => id !== variantId));
+      } else {
+        // Ticked: Add to cart
+        await api.post('/cart/items', {
+          variant_id: variantId,
+          quantity: 1,
+          is_bought_together: true
+        });
+        setSelectedAccessories(prev => [...prev, variantId]);
+      }
+      window.dispatchEvent(new Event('cart-updated'));
+    } catch (err) {
+      setError(err.message || 'Lỗi cập nhật sản phẩm mua kèm.');
+      setTimeout(() => setError(''), 4000);
     }
   };
 
@@ -345,20 +445,7 @@ function ProductDetail() {
         quantity: quantity
       });
 
-      // Add checked accessories to cart in parallel
-      if (selectedAccessories.length > 0) {
-        await Promise.all(
-          selectedAccessories.map(varId =>
-            api.post('/cart/items', {
-              variant_id: varId,
-              quantity: 1,
-              is_bought_together: true
-            })
-          )
-        );
-      }
-
-      setSuccessMsg('Đã thêm sản phẩm (và phụ kiện kèm theo) vào giỏ hàng thành công!');
+      setSuccessMsg('Đã thêm sản phẩm vào giỏ hàng thành công!');
       window.dispatchEvent(new Event('cart-updated'));
       window.dispatchEvent(new Event('open-cart-drawer'));
       
@@ -390,13 +477,35 @@ function ProductDetail() {
     );
   }
 
-  const hasDiscount = product.discount_price !== null && product.discount_price > 0;
-  const currentPrice = hasDiscount ? product.discount_price : product.price;
+  const hasDiscount = selectedVariant
+    ? (selectedVariant.discount_price !== null && selectedVariant.discount_price > 0)
+    : (product.discount_price !== null && product.discount_price > 0);
+  const currentPrice = selectedVariant
+    ? (selectedVariant.discount_price !== null && selectedVariant.discount_price > 0 ? selectedVariant.discount_price : selectedVariant.price)
+    : (product.discount_price !== null && product.discount_price > 0 ? product.discount_price : product.price);
 
-  // Compute total value (Main product + accessories with 20% discount)
-  const accessoriesTotal = accessories
-    .filter(acc => selectedAccessories.includes(acc.variants?.[0]?.id || acc.id))
-    .reduce((sum, acc) => sum + Math.round((acc.discount_price || acc.price || 0) * 0.8), 0);
+  const displayOriginalPrice = selectedVariant ? selectedVariant.price : product.price;
+  const displayDiscountPrice = selectedVariant ? selectedVariant.discount_price : product.discount_price;
+
+  const sockPrice = product.combo ? (product.combo.socks.discount_price || product.combo.socks.price || 0) : 0;
+  const lacePrice = product.combo ? (product.combo.laces.discount_price || product.combo.laces.price || 0) : 0;
+  const displayComboOriginalTotal = currentPrice + sockPrice + lacePrice;
+  const displayComboNewTotal = currentPrice + Math.round(sockPrice * 0.85) + Math.round(lacePrice * 0.85);
+
+  // Compute total value (Main product + accessories with 20% discount or 15% discount if full combo is formed)
+  const selectedAccItems = accessories.filter(item => 
+    selectedAccessories.includes(item.variants?.[0]?.id || item.id)
+  );
+  const hasSocksSelected = selectedAccItems.some(item => item.category_slug === 'vo-tat-the-thao');
+  const hasLacesSelected = selectedAccItems.some(item => item.category_slug === 'day-giay-the-thao');
+  const isFullComboFormed = hasSocksSelected && hasLacesSelected;
+
+  const accessoriesTotal = selectedAccItems.reduce((sum, item) => {
+    const basePrice = item.discount_price || item.price || 0;
+    const isComboItem = item.category_slug === 'vo-tat-the-thao' || item.category_slug === 'day-giay-the-thao';
+    const discountMultiplier = (isFullComboFormed && isComboItem) ? 0.85 : 0.8;
+    return sum + Math.round(basePrice * discountMultiplier);
+  }, 0);
   const totalCombinedPrice = (currentPrice * quantity) + accessoriesTotal;
 
   return (
@@ -542,10 +651,10 @@ function ProductDetail() {
             {hasDiscount && (
               <>
                 <span className="price-original">
-                  {product.price ? product.price.toLocaleString('vi-VN') + 'đ' : '0đ'}
+                  {displayOriginalPrice ? displayOriginalPrice.toLocaleString('vi-VN') + 'đ' : '0đ'}
                 </span>
                 <span className="discount-tag">
-                  -{Math.round(((product.price - product.discount_price) / product.price) * 100)}%
+                  -{Math.round(((displayOriginalPrice - displayDiscountPrice) / displayOriginalPrice) * 100)}%
                 </span>
               </>
             )}
@@ -667,7 +776,7 @@ function ProductDetail() {
                     <img src={activeImage} alt={product.name} />
                   </div>
                   <span className="combo-node-name">{product.name}</span>
-                  <span className="combo-node-price">{(product.discount_price || product.price).toLocaleString('vi-VN')}₫</span>
+                  <span className="combo-node-price">{currentPrice.toLocaleString('vi-VN')}₫</span>
                   <span className="combo-node-size-label">
                     {selectedSize ? `Size: ${selectedSize}` : 'Chưa chọn size'}
                   </span>
@@ -705,7 +814,7 @@ function ProductDetail() {
                 <div className="combo-item-node">
                   <div className="combo-img-wrapper">
                     <img 
-                      src={product.combo.laces.main_image_url ? product.combo.laces.main_image_url : 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=100'} 
+                      src={product.combo.laces.main_image_url ? product.combo.laces.main_image_url : '/uploads/products/sg-11134201-22100-kgwlbm2x8yivc3.webp'} 
                       alt={product.combo.laces.name} 
                     />
                   </div>
@@ -730,11 +839,11 @@ function ProductDetail() {
                 <div className="combo-price-breakdown">
                   <div>
                     <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Giá mua lẻ: </span>
-                    <span className="combo-old-price">{product.combo.original_total.toLocaleString('vi-VN')}₫</span>
+                    <span className="combo-old-price">{displayComboOriginalTotal.toLocaleString('vi-VN')}₫</span>
                   </div>
                   <div style={{ marginTop: '0.2rem' }}>
                     <span style={{ fontSize: '0.95rem', fontWeight: 700 }}>Combo chỉ: </span>
-                    <span className="combo-new-price">{product.combo.combo_total.toLocaleString('vi-VN')}₫</span>
+                    <span className="combo-new-price">{displayComboNewTotal.toLocaleString('vi-VN')}₫</span>
                   </div>
                 </div>
                 
@@ -765,7 +874,9 @@ function ProductDetail() {
                   const isChecked = selectedAccessories.includes(accVarId);
 
                   const baseAccPrice = acc.discount_price || acc.price || 0;
-                  const boughtTogetherPrice = Math.round(baseAccPrice * 0.8); // 20% discount
+                  const isComboItem = acc.category_slug === 'vo-tat-the-thao' || acc.category_slug === 'day-giay-the-thao';
+                  const discountPercent = (isFullComboFormed && isComboItem) ? 15 : 20;
+                  const boughtTogetherPrice = Math.round(baseAccPrice * (1 - discountPercent / 100));
 
                   return (
                     <div key={acc.id} className="bought-together-item">
@@ -788,7 +899,7 @@ function ProductDetail() {
                             {baseAccPrice.toLocaleString('vi-VN')}đ
                           </span>
                           <span className="discount-tag" style={{ fontSize: '0.65rem', padding: '1px 4px', marginLeft: '0.25rem' }}>
-                            -20%
+                            -{discountPercent}%
                           </span>
                         </div>
                       </div>
@@ -893,6 +1004,18 @@ function ProductDetail() {
           <img src={activeImage} alt={product.name} />
         </div>
       </div>
+
+      {/* Recommended Products */}
+      {recommendedProducts.length > 0 && (
+        <div className="recommended-section">
+          <h2 className="recommended-title">Có thể bạn cũng thích</h2>
+          <div className="products-display-grid">
+            {recommendedProducts.map((item) => (
+              <ProductCard key={item.id} product={item} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Product Reviews Section */}
       <div className="glass-card" style={{ marginTop: '3rem', padding: '2rem' }}>
