@@ -1,6 +1,6 @@
 /**
  * Tiện ích tính toán và ghép combo giảm giá
- * 1. Combo 3 món hoàn chỉnh: 1 Giày + 1 Tất (vớ) + 1 Dây giày -> Giảm 15% cho cả 3 sản phẩm.
+ * 1. Combo 3 món hoàn chỉnh: 1 Giày + 1 Tất (vớ) + 1 Dây giày -> Giảm 10% cho Tất và Dây.
  * 2. Phụ kiện mua kèm: Khi trong giỏ hàng có Giày, bất kỳ phụ kiện lẻ nào có đánh dấu mua kèm (is_bought_together = 1) sẽ được giảm 20%.
  */
 
@@ -105,7 +105,7 @@ function applyComboDiscount(items) {
         } else if (unit.is_flash_sale) {
           discountPercent = 0;
         } else {
-          discountPercent = 0.15;
+          discountPercent = 0.10;
         }
       } else if (unit.comboType === 'accessory') {
         if (unit.is_flash_sale) {

@@ -137,7 +137,6 @@ function Cart() {
   };
 
   const handleClearCart = async () => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa toàn bộ giỏ hàng?')) return;
     try {
       await api.delete('/cart');
       setCart({ items: [], summary: { total_items: 0, subtotal: 0 } });

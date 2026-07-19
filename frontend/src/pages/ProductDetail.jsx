@@ -490,9 +490,9 @@ function ProductDetail() {
   const sockPrice = product.combo ? (product.combo.socks.discount_price || product.combo.socks.price || 0) : 0;
   const lacePrice = product.combo ? (product.combo.laces.discount_price || product.combo.laces.price || 0) : 0;
   const displayComboOriginalTotal = currentPrice + sockPrice + lacePrice;
-  const displayComboNewTotal = currentPrice + Math.round(sockPrice * 0.85) + Math.round(lacePrice * 0.85);
+  const displayComboNewTotal = currentPrice + Math.round(sockPrice * 0.90) + Math.round(lacePrice * 0.90);
 
-  // Compute total value (Main product + accessories with 20% discount or 15% discount if full combo is formed)
+  // Compute total value (Main product + accessories with 20% discount or 10% discount if full combo is formed)
   const selectedAccItems = accessories.filter(item => 
     selectedAccessories.includes(item.variants?.[0]?.id || item.id)
   );
@@ -503,7 +503,7 @@ function ProductDetail() {
   const accessoriesTotal = selectedAccItems.reduce((sum, item) => {
     const basePrice = item.discount_price || item.price || 0;
     const isComboItem = item.category_slug === 'vo-tat-the-thao' || item.category_slug === 'day-giay-the-thao';
-    const discountMultiplier = (isFullComboFormed && isComboItem) ? 0.85 : 0.8;
+    const discountMultiplier = (isFullComboFormed && isComboItem) ? 0.90 : 0.8;
     return sum + Math.round(basePrice * discountMultiplier);
   }, 0);
   const totalCombinedPrice = (currentPrice * quantity) + accessoriesTotal;
@@ -763,7 +763,7 @@ function ProductDetail() {
             <div className="product-combo-card glass-card">
               <div className="combo-card-header">
                 <div className="combo-title-badge">🔥 COMBO HOÀN CHỈNH</div>
-                <div className="combo-save-tag">Tiết kiệm 15%</div>
+                <div className="combo-save-tag">Tiết kiệm 10%</div>
               </div>
               <p className="combo-subtitle">
                 Đề xuất trọn bộ phối màu và phụ kiện cùng thương hiệu <strong>{product.brand_name}</strong> để tối ưu hóa phong cách của bạn.
@@ -848,7 +848,7 @@ function ProductDetail() {
                 </div>
                 
                 <button onClick={handleBuyCombo} className="btn-buy-combo">
-                  ⚡ MUA COMBO (GIẢM 15%)
+                  ⚡ MUA COMBO (GIẢM 10%)
                 </button>
               </div>
             </div>
@@ -875,7 +875,7 @@ function ProductDetail() {
 
                   const baseAccPrice = acc.discount_price || acc.price || 0;
                   const isComboItem = acc.category_slug === 'vo-tat-the-thao' || acc.category_slug === 'day-giay-the-thao';
-                  const discountPercent = (isFullComboFormed && isComboItem) ? 15 : 20;
+                  const discountPercent = (isFullComboFormed && isComboItem) ? 10 : 20;
                   const boughtTogetherPrice = Math.round(baseAccPrice * (1 - discountPercent / 100));
 
                   return (

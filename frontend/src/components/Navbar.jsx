@@ -89,7 +89,6 @@ function Navbar() {
   };
 
   const handleClearCart = async () => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa toàn bộ giỏ hàng?')) return;
     try {
       await api.delete('/cart');
       fetchCart();

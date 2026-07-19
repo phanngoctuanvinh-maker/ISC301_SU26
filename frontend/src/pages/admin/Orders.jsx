@@ -68,8 +68,7 @@ function Orders() {
 
     try {
       await api.put(`/orders/${updateOrder.id}/status`, {
-        status: newStatus,
-        tracking_number: trackingNumber.trim() || null
+        status: newStatus
       });
 
       setSuccess(`Cập nhật đơn hàng ORD${String(updateOrder.id).padStart(8, '0')} thành công!`);
@@ -363,7 +362,7 @@ function Orders() {
                         <small style={{ color: 'var(--text-secondary)' }}>Màu: {item.color} | Size: {item.size} | SL: {item.quantity}</small>
                       </div>
                       <div style={{ textAlign: 'right', fontWeight: '600', color: 'var(--text-primary)' }}>
-                        {((item.discount_at_purchase || item.price_at_purchase) * item.quantity).toLocaleString('vi-VN')}₫
+                        {((Number(item.discount_at_purchase) || Number(item.price_at_purchase)) * item.quantity).toLocaleString('vi-VN')}₫
                       </div>
                     </div>
                   ))}
@@ -455,16 +454,7 @@ function Orders() {
                 </select>
               </div>
 
-              <div className="form-group" style={{ marginBottom: '1.75rem' }}>
-                <label className="form-label">Mã vận đơn (Tracking Number)</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={trackingNumber}
-                  onChange={(e) => setTrackingNumber(e.target.value)}
-                  placeholder="Nhập mã vận đơn (nếu có, VD: GHTK123456)..."
-                />
-              </div>
+
 
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <button type="submit" className="btn btn-primary">

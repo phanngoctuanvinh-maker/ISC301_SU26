@@ -202,6 +202,17 @@ const createOrder = async (userId, body) => {
   // 7. Tính totalAmount
   const totalAmount = subtotal - discountAmount + shippingFee;
 
+  // Generate unique tracking number (e.g. MSxxxxxxxx)
+  const generateTrackingNumber = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = 'MS';
+    for (let i = 0; i < 8; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+  const trackingNumber = generateTrackingNumber();
+
   // 8. Tạo shippingAddress snapshot
   const shippingAddress = [
     address.receiver_name,
@@ -218,8 +229,8 @@ const createOrder = async (userId, body) => {
     const [orderResult] = await connection.execute(
       `INSERT INTO orders (user_id, voucher_id, address_id, shipping_address,
         subtotal, discount_amount, shipping_fee, total_amount,
-        status, payment_method, payment_status, note)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, 'unpaid', ?)`,
+        status, payment_method, payment_status, note, tracking_number)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, 'unpaid', ?, ?)`,
       [
         userId,
         voucherId,
@@ -230,7 +241,8 @@ const createOrder = async (userId, body) => {
         shippingFee,
         totalAmount,
         body.payment_method,
-        body.note || null
+        body.note || null,
+        trackingNumber
       ]
     );
     const orderId = orderResult.insertId;

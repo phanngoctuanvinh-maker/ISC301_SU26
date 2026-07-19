@@ -159,8 +159,6 @@ function Profile() {
         rating: reviewRating,
         comment: reviewComment
       });
-
-      alert('Cảm ơn bạn đã đánh giá sản phẩm!');
       setReviewModalOpen(false);
       
       // Refresh order details to update review_id status
@@ -1113,7 +1111,7 @@ function Profile() {
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
-                          {((item.discount_at_purchase || item.price_at_purchase) * item.quantity).toLocaleString('vi-VN')}₫
+                          {((Number(item.discount_at_purchase) || Number(item.price_at_purchase)) * item.quantity).toLocaleString('vi-VN')}₫
                         </div>
                         {selectedOrder.status === 'delivered' && (
                           <div style={{ marginTop: '0.5rem' }}>

@@ -515,8 +515,8 @@ async function getProductCombo(product) {
 
   const originalTotal = shoePrice + sockPrice + lacePrice;
 
-  // 15% discount only applies to socks and laces, shoe price remains unchanged (discount 0%)
-  const comboTotal = shoePrice + Math.round(sockPrice * 0.85) + Math.round(lacePrice * 0.85);
+  // 10% discount only applies to socks and laces, shoe price remains unchanged (discount 0%)
+  const comboTotal = shoePrice + Math.round(sockPrice * 0.90) + Math.round(lacePrice * 0.90);
 
   const discountAmount = originalTotal - comboTotal;
 
@@ -536,7 +536,7 @@ async function getProductCombo(product) {
     original_total: originalTotal,
     combo_total: comboTotal,
     discount_amount: discountAmount,
-    discount_percent: 15
+    discount_percent: 10
   };
 }
 
